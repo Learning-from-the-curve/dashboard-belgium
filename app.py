@@ -1224,9 +1224,14 @@ app.layout = html.Div([
             # Other regional variables
             html.Div([
                 html.Div([
-                    dbc.Label("Select a variable:"),
+                    html.H5(
+                        children='Select a variable:',
+                        style={"textDecoration": "underline", "cursor": "pointer"},
+                        className='text-center my-2',
+                        id = 'tooltip_mr_sip'
+                    ),
                     dcc.Dropdown(
-                        id='reg-multiple',
+                        id='mortality-infected',
                         options=[{'label': i, 'value': i} for i in ['Mortality rate', 'Share of infected population']],
                         multi=False,
                         value = 'Mortality rate',
@@ -1238,7 +1243,7 @@ app.layout = html.Div([
                         html.P([
                             "Share of infected population: Share of confirmed cases out of population in 2019 for each region. If a gender is selected the 2019 population is gender- and region- specific."
                         ],),],
-                        target="reg-multiple",
+                        target="tooltip_mr_sip",
                         style= {'opacity': '0.8'}
                     ),
                 ],
@@ -1378,7 +1383,7 @@ className="container-fluid"
     Input('lifetable-option', 'value'),
     Input('reg-log', 'value'),
     Input('reg-gender', 'value'),
-    Input('reg-multiple', 'value'),])
+    Input('mortality-infected', 'value'),])
 def line_selection(dropdown, line_bar, line_lifetable, linear_log, reg_gender, var_choice):
     if len(dropdown) == 0:
         dropdown = 'Belgium'
