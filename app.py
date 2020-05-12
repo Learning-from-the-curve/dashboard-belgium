@@ -14,10 +14,10 @@ from dash.dependencies import Input, Output, State
 from pathlib import Path
 from difflib import SequenceMatcher
 
-path_input = Path.cwd() / 'input'
-Path.mkdir(path_input, exist_ok = True)
-path_life_table_BE = Path.cwd() / 'input' / 'sterftetafelsAE.xls'
-path_geo_BE = Path.cwd() / 'input' / 'municipalities-belgium.geojson'
+#path_input = Path.cwd() / 'input'
+#Path.mkdir(path_input, exist_ok = True)
+#path_life_table_BE = Path.cwd() / 'input' / 'sterftetafelsAE.xls'
+#path_geo_BE = Path.cwd() / 'input' / 'municipalities-belgium.geojson'
 path_deaths_BE = Path.cwd() / 'input' / 'TF_DEATHS.xlsx'
 path_pop_BE = Path.cwd() / 'input' / 'pop_muniBE.xlsx'
 
@@ -73,7 +73,7 @@ def cum_deaths_by_date(BE_data):
     BE_data = BE_data[['deaths_cum']]
     BE_data = BE_data.rename(columns={'deaths_cum': 'Deceased'})
     return BE_data
-
+'''
 def life_expectancy(path_life_table_BE: str, url_epistat: str, line_plot):
     for year in ['2015', '2016', '2017', '2018']:
         life_table = pd.read_excel(path_life_table_BE, sheet_name = year, header = None)
@@ -271,7 +271,7 @@ def life_expectancy(path_life_table_BE: str, url_epistat: str, line_plot):
                         yaxis = dict(title_text = 'Probability of death', showgrid=True, gridwidth=1, gridcolor='lightgrey'))
     fig = go.Figure( data = plots, layout = layout)
     return fig
-
+'''
 def ticks_log(df, var):
     temp_max = 0
     label_max = []
@@ -381,7 +381,7 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
                             xaxis = dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),
                             yaxis = dict( showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ','))
     return fig
-
+'''
 BE_reg_deaths = clean_data_be(url_epistat, cases = False, hosp = False, deaths = True)
 BE_reg_cases = clean_data_be(url_epistat, cases = True, hosp = False, deaths = False)
 
@@ -585,7 +585,7 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
-
+'''
 '''
 df_epistat_muni = pd.read_excel(url_epistat, sheet_name = 'CASES_MUNI_CUM', usecols = ['CASES', 'TX_DESCR_FR', 'TX_DESCR_NL', 'NIS5'])
 df_epistat_muni = df_epistat_muni.loc[df_epistat_muni['TX_DESCR_FR'].isna() == False]
@@ -827,7 +827,7 @@ def tab_right_provinces(BE_total_prov_merged):
     className="overflow-auto"
     ),
     className="border-0",
-
+'''
 def tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, region):
     if region == 'Flanders':
         index = 0
@@ -872,17 +872,17 @@ def tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths
     className="overflow-auto"
     ),
     className="border-0",
-
+'''
 children_right_tab = tab_right_provinces(BE_total_prov_merged)
 tab_right = dbc.Card(children = children_right_tab)
-
+'''
 tab_brussels = tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, 'Brussels')
 tab_left_brussels = dbc.Card(children = tab_brussels)
 tab_flanders = tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, 'Flanders')
 tab_left_flanders = dbc.Card(children = tab_flanders)
 tab_wallonia = tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, 'Wallonia')
 tab_left_wallonia = dbc.Card(children = tab_wallonia)
-
+'''
 
 markdown_data_info = dcc.Markdown('''
 The dashboard is updated daily following new daily releases of data from the data sources listed below.
@@ -1060,22 +1060,6 @@ app.layout = html.Div([
             ],
             className='my-2 mx-auto'
             ),
-            #Buttons based on screen size
-            html.Div([
-                html.Div([
-                    html.Div([
-                        dbc.Button("Belgium Map", href="#belgiumMap", external_link=True),
-                        dbc.Button("Regional stats", href="#regionStats", external_link=True),
-                        dbc.Button("Province stats", href="#provinceStats", external_link=True),
-                    ],
-                    className='text-center d-md-none'                        
-                    ),
-                ],
-                className='card-body pt-1 pb-0'
-                ),
-            ],
-            className='card my-2 shadow sticky-top'
-            ),
             # Aggregate and province plots
             html.Div([
                 html.H4(
@@ -1137,142 +1121,8 @@ app.layout = html.Div([
             style={},
             className='card my-2 shadow'
             ),
-            # Choose gender and linear or log scale
-            html.Div([
-                html.H4(
-                    children='Regional statistics by gender',
-                    style={"textDecoration": "underline", "cursor": "pointer"},
-                    className='text-center my-2',
-                    id = 'regional_tooltip'
-                ),
-                dbc.Tooltip(children = [
-                    html.P([
-                        "This group of plots includes data on confirmed cases and deaths, as well as plots on mortality rate and share of infected population."
-                    ],),
-                    html.P([
-                        "Using the dropdown menu it is possible to choose between statistics at the aggregate level or for a specfic gender."
-                    ],),],
-                target="regional_tooltip",
-                style= {'opacity': '0.8'}
-                ),
-                html.Div([
-                    dbc.RadioItems(
-                        id='reg-log',
-                        options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
-                        value='Linear',
-                        labelStyle={},
-                        inline=True,
-                        className='mb-1',
-                        style = {}
-                    ),
-                    dbc.Tooltip(children = [
-                        html.P([
-                            "Switch between linear and logarithmic scale for the plots reporting the number of confirmed cases and deaths at the regional level."
-                        ],),
-                        html.P([
-                            "When displaying the logarithmic scale, the horizontal axis reports the count from the day of the first confirmed case (or death)."
-                        ],),],
-                        target="reg-log",
-                        style= {'opacity': '0.8'}
-                    ),
-                    dcc.Dropdown(
-                        id='reg-gender',
-                        options=[{'label': i, 'value': i} for i in ['Total', 'Female', 'Male']],
-                        multi=False,
-                        value = 'Total',
-                        className='',
-                        style = {}
-                    ),
-                ],
-                className ='card-body text-center'
-                ),
-            ],
-            className='card my-2 shadow'
-            ),
-            # Regional plots confirmed cases
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='line-graph-reg-cases',)
-                ],
-                className='p-1'
-                ),
-            ],
-            style={},
-            className='card my-2 shadow'
-            ),
-            # Regional plots confirmed deaths
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='line-graph-reg-deaths',)
-                ],
-                className='p-1'
-                ),
-            ],
-            style={},
-            className='card my-2 shadow'
-            ),
-            # Other regional variables
-            html.Div([
-                html.Div([
-                    html.H5(
-                        children='Select a variable:',
-                        style={"textDecoration": "underline", "cursor": "pointer"},
-                        className='text-center my-2',
-                        id = 'tooltip_mr_sip'
-                    ),
-                    dcc.Dropdown(
-                        id='mortality-infected',
-                        options=[{'label': i, 'value': i} for i in ['Mortality rate', 'Share of infected population']],
-                        multi=False,
-                        value = 'Mortality rate',
-                    ),
-                    dbc.Tooltip(children = [
-                        html.P([
-                            "Mortality rate: Share of deaths out of population in 2019 for each region. If a gender is selected the 2019 population is gender- and region- specific."
-                        ],),
-                        html.P([
-                            "Share of infected population: Share of confirmed cases out of population in 2019 for each region. If a gender is selected the 2019 population is gender- and region- specific."
-                        ],),],
-                        target="tooltip_mr_sip",
-                        style= {'opacity': '0.8'}
-                    ),
-                ],
-                className='card-body text-center'
-                ),
-            ],
-            className='card my-2 shadow'
-            ),
-            # Plots other regional variables
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='line-graph-reg-multiples',)
-                ],
-                className='p-1'
-                ),
-            ],
-            style={},
-            className='card my-2 shadow'
-            ),
         ],
         className="col-md-6 order-md-2"
-        ),
-        
-        #Col2 Left
-        html.Div([
-            html.Div([
-                dbc.Tabs([
-                    dbc.Tab(tab_left_brussels, label="Brussels"),
-                    dbc.Tab(tab_left_flanders, label="Flanders"),
-                    dbc.Tab(tab_left_wallonia, label="Wallonia"),
-                ],
-                className="nav-justified"
-                )
-            ],
-            className="card my-2 shadow",
-            id="regionStats",
-            )
-        ],
-        className="col-md-3 order-md-1"
         ),
 
         #Col2 Right
@@ -1306,25 +1156,19 @@ className="container-fluid"
 )
 
 @app.callback(
-    [Output('line-graph-province', 'figure'),
-    Output('line-graph-reg-cases', 'figure'),
-    Output('line-graph-reg-deaths', 'figure'),
-    Output('line-graph-reg-multiples', 'figure'),],
+    Output('line-graph-province', 'figure'),
     [Input('demo-dropdown', 'value'),
-    Input('plots-mode', 'value'),
-    Input('reg-log', 'value'),
-    Input('reg-gender', 'value'),
-    Input('mortality-infected', 'value'),])
-def line_selection(dropdown, line_bar, linear_log, reg_gender, var_choice):
+    Input('plots-mode', 'value'),])
+def line_selection(dropdown, line_bar):
     if len(dropdown) == 0:
         dropdown = 'Belgium'
     fig1 = draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province = dropdown, plot_mode = line_bar)
     #fig2 = life_expectancy(path_life_table_BE, url_epistat, line_lifetable)
-    fig3 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'cases', linear_log, reg_gender)
-    fig4 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'deaths', linear_log, reg_gender)
-    fig5 = draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, reg_gender)
+    #fig3 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'cases', linear_log, reg_gender)
+    #fig4 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'deaths', linear_log, reg_gender)
+    #fig5 = draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, reg_gender)
     #fig6 = excess_mortality_lines(BE_excess_mortality)
-    return fig1, fig3, fig4, fig5
+    return fig1
 '''
 @app.callback(
     [Output('line-graph-province', 'figure'),
