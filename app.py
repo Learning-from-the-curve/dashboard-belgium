@@ -586,7 +586,7 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
 
     return fig
 
-
+'''
 df_epistat_muni = pd.read_excel(url_epistat, sheet_name = 'CASES_MUNI_CUM', usecols = ['CASES', 'TX_DESCR_FR', 'TX_DESCR_NL', 'NIS5'])
 df_epistat_muni = df_epistat_muni.loc[df_epistat_muni['TX_DESCR_FR'].isna() == False]
 df_epistat_muni = df_epistat_muni.loc[df_epistat_muni['TX_DESCR_NL'].isna() == False]
@@ -670,7 +670,8 @@ df_epistat_muni_clean.loc['Puers'] = [df_epistat_muni_clean.loc['Sint-Amands'][0
 df_epistat_muni_clean = df_epistat_muni_clean.reset_index()
 df_epistat_muni_clean = df_epistat_muni_clean.rename(columns={"name": "Municipality", "CASES": "Number cases"})
 df_epistat_muni_clean['Number cases (ln)'] = np.log(df_epistat_muni_clean['Number cases']).round(2)
-
+'''
+'''
 mapbox_access_token = 'pk.eyJ1IjoiZmVkZWdhbGwiLCJhIjoiY2s5azJwaW80MDQxeTNkcWh4bGhjeTN2NyJ9.twKWO-W5wPLX6m9OfrpZCw'
 
 def gen_map(map_data,zoom,lat,lon):
@@ -716,9 +717,9 @@ def map_selection(data):
     aux = data
     zoom = 6
     return gen_map(aux,zoom,50.85045,4.34878)
-
+'''
 # Draw weekly mortality
-
+'''
 BE_weekly_deaths = clean_data_be(data_path = url_epistat, cases = False, hosp = False, deaths = True)
 BE_weekly_deaths['DEATHS'] = BE_weekly_deaths.groupby(level = 0)['DEATHS'].sum().round(2)
 BE_weekly_deaths = BE_weekly_deaths.groupby(level = 0).first()
@@ -796,7 +797,7 @@ def excess_mortality_lines(BE_excess_mortality):
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
-
+'''
 def tab_right_provinces(BE_total_prov_merged):
     temp_data = BE_total_prov_merged.copy()
     return html.Div([
@@ -1059,17 +1060,6 @@ app.layout = html.Div([
             ],
             className='my-2 mx-auto'
             ),
-            #Map, Table
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='belgium_map', figure = map_selection(df_epistat_muni_clean))
-                ],
-                className='',
-                id="belgiumMap",
-                ),
-            ],
-            className='my-2 shadow'
-            ),
             #Buttons based on screen size
             html.Div([
                 html.Div([
@@ -1263,62 +1253,6 @@ app.layout = html.Div([
             style={},
             className='card my-2 shadow'
             ),
-            
-            # Lifetables and excess mortality
-            html.Div([
-                html.H4(
-                children='Life expectancy and excess mortality',
-                style={"textDecoration": "underline", "cursor": "pointer"},
-                className='text-center my-2',
-                id = 'life_mortality_tooltip'
-                ),
-                dbc.Tooltip(children = [
-                    html.P([
-                        "In the life expectancy group of plots, one curve plots the probability of being dead by a certain age, for all causes of death. For this curve, we average the densities over the years 2015-2017 to wash out year-specific peaks in mortality. The other curve shows mortality rates from COVID-19, across age groups. We also compare COVID-19 deaths by age group across regions (Brussels, Flanders, Wallonia)."
-                    ],),
-                    html.P([
-                        "The excess mortality plot shows the weekly expected number of deaths (red curve) as the average number of deaths of 2015-2017. The blue curve plots the number of weekly deaths from COVID-19."
-                    ],),],
-                    target="life_mortality_tooltip",
-                    style= {'opacity': '0.8'}
-                ),
-                html.Div([
-                    dcc.Dropdown(
-                    id='lifetable-option',
-                    options=[{'label': i, 'value': i} for i in ['COVID-19 deaths, all', 'COVID-19 deaths, female', 'COVID-19 deaths, male', 'COVID-19 deaths, by region']],
-                    multi=False,
-                    value = 'COVID-19 deaths, all',
-                    ),
-                ],
-                className='card-body pt-1 pb-0'
-                ),
-            ],
-            className='card my-2 shadow'
-            ),
-            
-            # Plots lifetable
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='line-graph-lifetable',)
-                ],
-                className='p-1'
-                ),
-            ],
-            style={},
-            className='card my-2 shadow'
-            ),
-            
-            # Plot excess mortality
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='line-graph-excess',)
-                ],
-                className='p-1'
-                ),
-            ],
-            style={},
-            className='card my-2 shadow'
-            ),
         ],
         className="col-md-6 order-md-2"
         ),
@@ -1373,6 +1307,27 @@ className="container-fluid"
 
 @app.callback(
     [Output('line-graph-province', 'figure'),
+    Output('line-graph-reg-cases', 'figure'),
+    Output('line-graph-reg-deaths', 'figure'),
+    Output('line-graph-reg-multiples', 'figure'),],
+    [Input('demo-dropdown', 'value'),
+    Input('plots-mode', 'value'),
+    Input('reg-log', 'value'),
+    Input('reg-gender', 'value'),
+    Input('mortality-infected', 'value'),])
+def line_selection(dropdown, line_bar, linear_log, reg_gender, var_choice):
+    if len(dropdown) == 0:
+        dropdown = 'Belgium'
+    fig1 = draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province = dropdown, plot_mode = line_bar)
+    #fig2 = life_expectancy(path_life_table_BE, url_epistat, line_lifetable)
+    fig3 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'cases', linear_log, reg_gender)
+    fig4 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'deaths', linear_log, reg_gender)
+    fig5 = draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, reg_gender)
+    #fig6 = excess_mortality_lines(BE_excess_mortality)
+    return fig1, fig3, fig4, fig5
+'''
+@app.callback(
+    [Output('line-graph-province', 'figure'),
     Output('line-graph-lifetable', 'figure'),
     Output('line-graph-reg-cases', 'figure'),
     Output('line-graph-reg-deaths', 'figure'),
@@ -1394,7 +1349,7 @@ def line_selection(dropdown, line_bar, line_lifetable, linear_log, reg_gender, v
     fig5 = draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, reg_gender)
     fig6 = excess_mortality_lines(BE_excess_mortality)
     return fig1, fig2, fig3, fig4, fig5, fig6
-
+'''
 @app.callback(
     Output("modal-centered-left", "is_open"),
     [Input("open-centered-left", "n_clicks"), Input("close-centered-left", "n_clicks")],
