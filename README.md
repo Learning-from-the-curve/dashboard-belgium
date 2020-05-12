@@ -1,1 +1,1 @@
-# COVID-19 - World Dashboard App
+# COVID-19 - Belgium Dashboard App
