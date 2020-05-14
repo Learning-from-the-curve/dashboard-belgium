@@ -39,7 +39,6 @@ server = app.server
 ######################################
 
 # get data directly from github. The data source provided by Johns Hopkins University.
-url_epistat = 'https://epistat.sciensano.be/Data/COVID19BE.xlsx'
 
 pickle_path = Path.cwd() / 'pickles_jar'
 pickles_list = [
@@ -58,6 +57,7 @@ pickles_list = [
     'BE_total_prov_merged',
     'available_provinces',
     'life_table_discrete',
+    'BE_deaths_lifetable',
     ]
 
 pickle_files = [str(pickle_path) + os.sep + x + '.pkl' for x in pickles_list]
@@ -83,11 +83,11 @@ BE_excess_mortality = unpicklify(pickle_files[11])
 BE_total_prov_merged = unpicklify(pickle_files[12])
 available_provinces = unpicklify(pickle_files[13])
 life_table_discrete = unpicklify(pickle_files[14])
+BE_deaths_lifetable = unpicklify(pickle_files[15])
 
-def life_expectancy(life_table_discrete, url_epistat: str, line_plot):
+def life_expectancy(life_table_discrete, BE_deaths, line_plot):
     plots = []
     if line_plot == 'COVID-19 deaths, all':
-        BE_deaths = pd.read_excel(url_epistat, sheet_name = 'MORT')
         BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
         BE_deaths = BE_deaths.set_index('AGEGROUP')
         BE_deaths['deaths_by_age'] = BE_deaths.groupby(level = 0)['DEATHS'].sum()
@@ -121,7 +121,6 @@ def life_expectancy(life_table_discrete, url_epistat: str, line_plot):
                             )
         plots.append(trace)
     elif line_plot == 'COVID-19 deaths, female' or line_plot == 'COVID-19 deaths, male':
-        BE_deaths = pd.read_excel(url_epistat, sheet_name = 'MORT')
         BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
         BE_deaths = BE_deaths.set_index(['SEX', 'AGEGROUP'])
         BE_deaths['sum_deaths'] = BE_deaths.groupby(level=['SEX','AGEGROUP'])['DEATHS'].sum()
@@ -181,7 +180,6 @@ def life_expectancy(life_table_discrete, url_epistat: str, line_plot):
                                 )
             plots.append(trace)
     elif line_plot == 'COVID-19 deaths, by region':
-        BE_deaths = pd.read_excel(url_epistat, sheet_name = 'MORT')
         BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
         BE_deaths = BE_deaths.set_index(['REGION', 'AGEGROUP'])
         BE_deaths['sum_deaths'] = BE_deaths.groupby(level=['REGION','AGEGROUP'])['DEATHS'].sum()
@@ -1148,7 +1146,7 @@ def line_selection(linear_log, reg_gender, var_choice):
     Output('line-graph-lifetable', 'figure'),
     [Input('lifetable-option', 'value'),])
 def line_selection(line_lifetable):
-    fig1 = life_expectancy(life_table_discrete, url_epistat, line_lifetable)
+    fig1 = life_expectancy(life_table_discrete, BE_deaths_lifetable, line_lifetable)
     return fig1
 
 @app.callback(

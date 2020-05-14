@@ -242,6 +242,9 @@ life_table_discrete = life_table[['avg_density_male', 'avg_density_female', 'avg
 life_table_discrete = life_table_discrete.round(2)
 life_table_discrete = life_table_discrete.groupby(level = 0).last()
 
+BE_deaths_lifetable = pd.read_excel(url_epistat, sheet_name = 'MORT')
+
+
 def picklify(dataframe, name):
     file_write = open(f"./pickles_jar/{name}.pkl", 'wb')
     pickle.dump(dataframe, file_write)
@@ -263,6 +266,7 @@ dataframe_list = [
     [BE_total_prov_merged, 'BE_total_prov_merged'],
     [available_provinces, 'available_provinces'],
     [life_table_discrete, 'life_table_discrete'],
+    [BE_deaths_lifetable, 'BE_deaths_lifetable']
     ]
 
 for dataframe, name in dataframe_list:
