@@ -661,7 +661,7 @@ We focus on this dashboard on the COVID-19 pandemic in Belgium. This dashboard i
 
 Articles by members of the Learning from the Curve team reporting daily information on COVID-19 are available [here](https://www.learningfromthecurve.net/commentaries/).
 
-Please, report any bug at the following contact address: learningfromthecurve@gmail.com.
+Please, report any bug at the following contact address: learningfromthecurve.info@gmail.com.
 ''')
 ############################
 # Bootstrap Grid Layout
