@@ -9,17 +9,14 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import dash_table as dt
+import pickle
+import os
+import time
 
 from dash.dependencies import Input, Output, State
 from pathlib import Path
 from difflib import SequenceMatcher
-
-path_input = Path.cwd() / 'input'
-Path.mkdir(path_input, exist_ok = True)
-path_life_table_BE = Path.cwd() / 'input' / 'sterftetafelsAE.xls'
-path_geo_BE = Path.cwd() / 'input' / 'municipalities-belgium.geojson'
-path_deaths_BE = Path.cwd() / 'input' / 'TF_DEATHS.xlsx'
-path_pop_BE = Path.cwd() / 'input' / 'pop_muniBE.xlsx'
+from functions import *
 
 #####################################################################################################################################
 # Boostrap CSS and font awesome . Option 1) Run from codepen directly Option 2) Copy css file to assets folder and run locally
@@ -42,82 +39,55 @@ server = app.server
 ######################################
 
 # get data directly from github. The data source provided by Johns Hopkins University.
-url_epistat = 'https://epistat.sciensano.be/Data/COVID19BE.xlsx'
 
-def clean_data_be(data_path: str, cases: bool, hosp: bool, deaths: bool):
-    if cases:
-        BE_data = pd.read_excel(data_path, sheet_name = 'CASES_AGESEX')
-    elif hosp:
-        BE_data = pd.read_excel(data_path, sheet_name = 'HOSP')
-    elif deaths:
-        BE_data = pd.read_excel(data_path, sheet_name = 'MORT')
-    if cases or hosp:
-        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'BrabantWallon'] = 'Walloon Brabant'
-        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'VlaamsBrabant'] = 'Flemish Brabant'
-        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'OostVlaanderen'] = 'East Flanders'
-        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'WestVlaanderen'] = 'West Flanders'
-        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'Antwerpen'] = 'Antwerp'
-    if cases:    
-        BE_data = BE_data.loc[BE_data['DATE'].isna() == False]
-        BE_data = BE_data.loc[BE_data['PROVINCE'].isna() == False]
-    if cases or hosp:
-        BE_data = BE_data.set_index(['DATE', 'PROVINCE'])
-    else:
-        BE_data = BE_data.set_index('DATE')
-    return BE_data
+pickle_path = Path.cwd() / 'pickles_jar'
+pickles_list = [
+    'BE_total_prov_merged',
+    'BE_total_merged',
+    'BE_reg_total_deaths',
+    'BE_reg_total_cases',
+    'BE_reg_male_deaths',
+    'BE_reg_female_deaths',
+    'BE_reg_male_cases',
+    'BE_reg_female_cases',
+    'BE_reg_pop',
+    'df_epistat_muni_clean',
+    'df_muni_geo',
+    'BE_excess_mortality',
+    'BE_total_prov_merged',
+    'available_provinces',
+    'life_table_discrete',
+    'BE_deaths_lifetable',
+    ]
 
-def cum_deaths_by_date(BE_data):
-    BE_data['deaths_day'] = BE_data.groupby(level = 0)['DEATHS'].sum()
-    BE_data = BE_data.groupby(level = 0).first()
-    BE_data['deaths_cum'] = BE_data['deaths_day'].cumsum()
-    BE_data = BE_data[['deaths_cum']]
-    BE_data = BE_data.rename(columns={'deaths_cum': 'Deceased'})
-    return BE_data
+pickle_files = [str(pickle_path) + os.sep + x + '.pkl' for x in pickles_list]
 
-def life_expectancy(path_life_table_BE: str, url_epistat: str, line_plot):
-    for year in ['2015', '2016', '2017', '2018']:
-        life_table = pd.read_excel(path_life_table_BE, sheet_name = year, header = None)
-        life_table = life_table[[0, 6, 13, 20]]
-        life_table = life_table.rename(columns={0: "age", 6: "surv_male", 13: "surv_female", 20: "surv_all"})
-        life_table['age'].loc[life_table['age'] == '105+'] = '105'
-        life_table = life_table.loc[life_table['age'].isna() == False]
-        life_table = life_table[1:]
-        life_table['age'] = life_table['age'].astype(int)
-        life_table = life_table.astype('float')
-        for sex in ['male', 'female', 'all']:
-            life_table['density_' + sex] = 1 - life_table['surv_' + sex]/1000000
-        if year == '2015':
-            life_table_2015 = life_table.copy()
-        if year == '2016':
-            life_table_2016 = life_table.copy()
-        if year == '2017':
-            life_table_2017 = life_table.copy()
-        if year == '2018':
-            life_table_2018 = life_table.copy()
-    life_table = pd.concat([life_table_2015, life_table_2016, life_table_2017], ignore_index = True)
-    life_table = life_table.set_index('age')
-    for sex in ['male', 'female', 'all']:
-        life_table['avg_density_' + sex] = life_table.groupby(level = 0)['density_' + sex].mean()
-    life_table = life_table.groupby(level = 0).last()
-    life_table = life_table.reset_index()
-    life_table_cont = life_table.copy()
-    life_table_cont = life_table_cont[['age', 'avg_density_male', 'avg_density_female', 'avg_density_all']]
-    life_table_cont = life_table_cont.round(2)
-    life_table['age'][(life_table['age'] >= 0) & (life_table['age'] <= 24)] = 12
-    life_table['age'][(life_table['age'] >= 25) & (life_table['age'] <= 44)] = 30
-    life_table['age'][(life_table['age'] >= 45) & (life_table['age'] <= 64)] = 50
-    life_table['age'][(life_table['age'] >= 65) & (life_table['age'] <= 74)] = 70
-    life_table['age'][(life_table['age'] >= 85) & (life_table['age'] <= 94)] = 90
-    life_table['age'][(life_table['age'] >= 95)] = 90
-    life_table = life_table.set_index('age')
-    life_table = life_table.drop(labels = [x for x in range(75, 80, 1)])
-    life_table = life_table.drop(labels = [x for x in range(81, 85, 1)])
-    life_table_discrete = life_table[['avg_density_male', 'avg_density_female', 'avg_density_all']]
-    life_table_discrete = life_table_discrete.round(2)
-    life_table_discrete = life_table_discrete.groupby(level = 0).last()
+def unpicklify(path):
+    file_read = open(path, 'rb')
+    dataframe = pickle.load(file_read)
+    file_read.close()
+    return dataframe
+
+BE_total_prov_merged = unpicklify(pickle_files[0])
+BE_total_merged = unpicklify(pickle_files[1])
+BE_reg_total_deaths = unpicklify(pickle_files[2]) 
+BE_reg_total_cases = unpicklify(pickle_files[3])
+BE_reg_male_deaths = unpicklify(pickle_files[4])
+BE_reg_female_deaths = unpicklify(pickle_files[5])
+BE_reg_male_cases = unpicklify(pickle_files[6])
+BE_reg_female_cases = unpicklify(pickle_files[7])
+BE_reg_pop = unpicklify(pickle_files[8])
+df_epistat_muni_clean = unpicklify(pickle_files[9])
+df_muni_geo = unpicklify(pickle_files[10])
+BE_excess_mortality = unpicklify(pickle_files[11])
+BE_total_prov_merged = unpicklify(pickle_files[12])
+available_provinces = unpicklify(pickle_files[13])
+life_table_discrete = unpicklify(pickle_files[14])
+BE_deaths_lifetable = unpicklify(pickle_files[15])
+
+def life_expectancy(life_table_discrete, BE_deaths, line_plot):
     plots = []
     if line_plot == 'COVID-19 deaths, all':
-        BE_deaths = pd.read_excel(url_epistat, sheet_name = 'MORT')
         BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
         BE_deaths = BE_deaths.set_index('AGEGROUP')
         BE_deaths['deaths_by_age'] = BE_deaths.groupby(level = 0)['DEATHS'].sum()
@@ -151,7 +121,6 @@ def life_expectancy(path_life_table_BE: str, url_epistat: str, line_plot):
                             )
         plots.append(trace)
     elif line_plot == 'COVID-19 deaths, female' or line_plot == 'COVID-19 deaths, male':
-        BE_deaths = pd.read_excel(url_epistat, sheet_name = 'MORT')
         BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
         BE_deaths = BE_deaths.set_index(['SEX', 'AGEGROUP'])
         BE_deaths['sum_deaths'] = BE_deaths.groupby(level=['SEX','AGEGROUP'])['DEATHS'].sum()
@@ -211,7 +180,6 @@ def life_expectancy(path_life_table_BE: str, url_epistat: str, line_plot):
                                 )
             plots.append(trace)
     elif line_plot == 'COVID-19 deaths, by region':
-        BE_deaths = pd.read_excel(url_epistat, sheet_name = 'MORT')
         BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
         BE_deaths = BE_deaths.set_index(['REGION', 'AGEGROUP'])
         BE_deaths['sum_deaths'] = BE_deaths.groupby(level=['REGION','AGEGROUP'])['DEATHS'].sum()
@@ -272,58 +240,9 @@ def life_expectancy(path_life_table_BE: str, url_epistat: str, line_plot):
     fig = go.Figure( data = plots, layout = layout)
     return fig
 
-def ticks_log(df, var):
-    temp_max = 0
-    label_max = []
-    text_label_max = []
-    tick = 1
-    for reg in set(df.index):
-        if temp_max < df[var].max():
-            temp_max = df[var].max()
-    while tick < temp_max*(0.50):
-        label_max.append(tick)
-        text_label_max.append(f'{tick:,}')
-        tick *= 10
-    label_max.append(temp_max)
-    text_label_max.append(f'{temp_max:,}')
-    return label_max, text_label_max
-
-BE_data_cases = clean_data_be(url_epistat, cases = True, hosp = False, deaths = False)
-BE_data_hosp = clean_data_be(url_epistat, cases = False, hosp = True, deaths = False)
-BE_data_cases['CASES'] = BE_data_cases.groupby(['DATE', 'PROVINCE'])['CASES'].sum()
-BE_data_cases = BE_data_cases.groupby(['DATE','PROVINCE']).first()
-BE_data_cases = BE_data_cases[['CASES']]
-BE_data_cases = BE_data_cases.rename(columns={"CASES": "Cases"})
-BE_data_cases['Cumulative cases'] = BE_data_cases.groupby(['PROVINCE'])['Cases'].cumsum()
-BE_data_hosp['Released from hospital'] = BE_data_hosp.groupby(['PROVINCE'])['NEW_OUT'].cumsum()
-BE_data_hosp['Total hospitalized'] = BE_data_hosp.groupby(['PROVINCE'])['NEW_IN'].cumsum()
-BE_data_hosp = BE_data_hosp.rename(columns={"TOTAL_IN": "Hospitalized", 'TOTAL_IN_ICU': 'ICU', 'TOTAL_IN_RESP': 'Respiratory'})
-BE_data_hosp = BE_data_hosp.reset_index()
-BE_data_hosp = BE_data_hosp.rename(columns={"index": "DATE"})
-BE_data_hosp['DATE'] = BE_data_hosp['DATE'].astype('str')
-BE_data_hosp = BE_data_hosp.set_index(['DATE','PROVINCE'])
-BE_total_prov = BE_data_cases.merge(BE_data_hosp, left_index = True, right_index = True, how='outer')
-BE_total_prov_merged = BE_total_prov.reset_index('PROVINCE').copy()
-BE_total_merged = BE_total_prov_merged.copy()
-BE_total_merged['PROVINCE'] = 'Belgium'
-BE_total_merged = BE_total_merged.groupby(level = 0).sum(min_count = 1)
-BE_data_deaths = clean_data_be(url_epistat, cases = False, hosp = False, deaths = True)
-BE_total_deaths = cum_deaths_by_date(BE_data_deaths)
-BE_total_merged = BE_total_merged.merge(BE_total_deaths, left_index = True, right_index = True, how='outer')
-for date in set(BE_total_prov_merged.index):
-    for var in ['Cumulative cases', 'Released from hospital', 'Total hospitalized']:
-        temp_data = BE_total_prov_merged[var].loc[date].reset_index()
-        for i in range(len(temp_data[var])):
-            if np.isnan(temp_data.iloc[i][var]):
-                BE_total_merged.at[date, var] = np.nan
-
-available_provinces = ['Belgium']
-for prov in sorted(set(BE_total_prov_merged['PROVINCE'])):
-    available_provinces.append(prov)
-
 def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province, plot_mode):
     fig = go.Figure()
-    if plot_mode == 'line':
+    if plot_mode == 'Line':
         if selected_province == 'Belgium':
             variables = ['Cumulative cases', 'Deceased', 'Hospitalized', 'ICU', 'Respiratory', 'Released from hospital', 'Total hospitalized']
             y = BE_total_merged.copy()
@@ -362,7 +281,7 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
         fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
         fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
-    elif plot_mode == 'bar':
+    elif plot_mode == 'Bar':
         variables = ['Cumulative cases', 'Hospitalized', 'ICU', 'Respiratory', 'Released from hospital']
         temp_data = BE_total_prov_merged.loc[BE_total_prov_merged.index == BE_total_prov_merged.index.max()]
         temp_data = temp_data.set_index('PROVINCE')
@@ -381,42 +300,6 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
                             xaxis = dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),
                             yaxis = dict( showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ','))
     return fig
-
-BE_reg_deaths = clean_data_be(url_epistat, cases = False, hosp = False, deaths = True)
-BE_reg_cases = clean_data_be(url_epistat, cases = True, hosp = False, deaths = False)
-
-BE_reg_pop = pd.read_excel(path_pop_BE, sheet_name = 'Bevolking in 2019', header = [1])
-BE_reg_pop = BE_reg_pop.loc[(BE_reg_pop['Woonplaats'] == 'Vlaams Gewest') | (BE_reg_pop['Woonplaats'] == 'Waals Gewest') | (BE_reg_pop['Woonplaats'] == 'Brussels Hoofdstedelijk Gewest')]
-BE_reg_pop = BE_reg_pop.rename(columns = {'Woonplaats': 'Region', 'Mannen': 'Male', 'Vrouwen': 'Female', 'Totaal': 'Total'})
-BE_reg_pop['Region'].loc[BE_reg_pop['Region'] == 'Vlaams Gewest'] = 'Flanders'
-BE_reg_pop['Region'].loc[BE_reg_pop['Region'] == 'Waals Gewest'] = 'Wallonia'
-BE_reg_pop['Region'].loc[BE_reg_pop['Region'] == 'Brussels Hoofdstedelijk Gewest'] = 'Brussels'
-
-df_reg_male_deaths = BE_reg_deaths.loc[BE_reg_deaths['SEX'] == 'M'].copy()
-df_reg_female_deaths = BE_reg_deaths.loc[BE_reg_deaths['SEX'] == 'F'].copy()
-
-df_reg_male_cases = BE_reg_cases.loc[BE_reg_cases['SEX'] == 'M'].copy()
-df_reg_female_cases = BE_reg_cases.loc[BE_reg_cases['SEX'] == 'F'].copy()
-
-def aggregate_regions(df, var):
-    df_reg_total = df.copy()
-    df_reg_total = df_reg_total.reset_index()
-    df_reg_total = df_reg_total.set_index(['DATE', 'REGION'])
-    df_reg_total[var] = df_reg_total.groupby(['DATE', 'REGION'])[var].sum()
-    df_reg_total = df_reg_total.groupby(['DATE', 'REGION']).first()
-    df_reg_total = df_reg_total.reset_index('DATE')
-    df_reg_total = df_reg_total[['DATE', var]]
-    df_reg_total[var] = df_reg_total.groupby(level = 0)[var].cumsum()
-    return df_reg_total
-
-BE_reg_total_deaths = aggregate_regions(BE_reg_deaths, 'DEATHS')
-BE_reg_total_cases = aggregate_regions(BE_reg_cases, 'CASES')
-
-BE_reg_male_deaths = aggregate_regions(df_reg_male_deaths, 'DEATHS')
-BE_reg_female_deaths = aggregate_regions(df_reg_female_deaths, 'DEATHS')
-
-BE_reg_male_cases = aggregate_regions(df_reg_male_cases, 'CASES')
-BE_reg_female_cases = aggregate_regions(df_reg_female_cases, 'CASES')
 
 def draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, variable, linear_log, gender):
     fig = go.Figure()
@@ -505,7 +388,6 @@ def draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deat
 
     return fig
 
-
 def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, gender):
     fig = go.Figure()
     if var_choice == 'Mortality rate':
@@ -586,91 +468,6 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
 
     return fig
 
-
-df_epistat_muni = pd.read_excel(url_epistat, sheet_name = 'CASES_MUNI_CUM', usecols = ['CASES', 'TX_DESCR_FR', 'TX_DESCR_NL', 'NIS5'])
-df_epistat_muni = df_epistat_muni.loc[df_epistat_muni['TX_DESCR_FR'].isna() == False]
-df_epistat_muni = df_epistat_muni.loc[df_epistat_muni['TX_DESCR_NL'].isna() == False]
-df_epistat_muni = df_epistat_muni.rename(columns={"TX_DESCR_FR": "name_fr", "TX_DESCR_NL": "name_nl", "NIS5": "NISCode"})
-df_epistat_muni['CASES'] = np.where(df_epistat_muni['CASES'] == '<5', '1', df_epistat_muni['CASES'])
-df_epistat_muni['CASES'] = pd.to_numeric(df_epistat_muni['CASES'])
-df_epistat_muni['NISCode'] = df_epistat_muni['NISCode'].astype(int)
-df_epistat_muni['NISCode'] = df_epistat_muni['NISCode'].astype(str)
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Puurs-Sint-Amands'] = 'Sint-Amands'
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Lievegem'] = 'Waarschoot'
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Oudsbergen'] = 'Opglabbeek'
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Blegny'] = 'Blégny'
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Etalle'] = 'Étalle'
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Villers-Le-Bouillet'] = 'Villers-le-Bouillet'
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Ecaussinnes'] = 'Écaussinnes'
-df_epistat_muni['name_nl'].loc[df_epistat_muni['name_nl'] == 'Pelt'] = 'Neerpelt'
-df_epistat_muni = df_epistat_muni.set_index('NISCode')
-BE_pop = pd.read_excel(path_pop_BE, sheet_name = 'Bevolking in 2019', header = [1])
-BE_pop = BE_pop.loc[BE_pop['NIS code'].isna() == False]
-BE_pop = BE_pop.rename(columns={"NIS code": "NISCode"})
-BE_pop = BE_pop[:-3]
-BE_pop['NISCode'] = BE_pop['NISCode'].astype(int)
-BE_pop['NISCode'] = BE_pop['NISCode'].astype(str)
-BE_pop = BE_pop.set_index('NISCode')
-df_epistat_muni = df_epistat_muni.join(BE_pop)
-df_epistat_muni = df_epistat_muni.reset_index()
-df_epistat_muni['Infected population (%)'] = ((df_epistat_muni['CASES']/df_epistat_muni['Totaal'])*100).round(2)
-
-with open(path_geo_BE) as f:
-    df_muni_geo = json.load(f)
-temp_list = []
-
-for i in range(len(df_muni_geo['features'])):
-    for index, j in enumerate(df_muni_geo['features'][i]['properties']['name']):
-        if j == '#':
-            df_muni_geo['features'][i]['properties']['name'] = df_muni_geo['features'][i]['properties']['name'][:index]
-    temp_list.append(df_muni_geo['features'][i]['properties']['name'])
-temp_list.sort()
-temp_list2 = list(df_epistat_muni['name_nl'])
-temp_list3 = list(df_epistat_muni['name_fr'])
-for i in range(len(temp_list2)):
-    temp_string = ''
-    for index, j in enumerate(temp_list2[i]):
-        temp_string += temp_list2[i][index]
-        if index +2 < len(temp_list2[i]) and temp_list2[i][index+1] == ' ' and temp_list2[i][index+2] == '(':
-            break
-    temp_list2[i] = temp_string
-for i in range(len(temp_list3)):
-    temp_string = ''
-    for index, j in enumerate(temp_list3[i]):
-        temp_string += temp_list3[i][index]
-        if index +2 < len(temp_list3[i]) and temp_list3[i][index+1] == ' ' and temp_list3[i][index+2] == '(':
-            break
-    temp_list3[i] = temp_string
-for i in range(len(temp_list2)):
-    if temp_list2[i] not in temp_list:
-        if temp_list3[i] not in temp_list:
-            for name in temp_list:
-                if SequenceMatcher(None, name, temp_list2[i]).ratio() > 0.7:
-                    temp_list2[i] = name
-                elif SequenceMatcher(None, name, temp_list3[i]).ratio() > 0.7:
-                    temp_list3[i] = name
-for i in range(len(temp_list2)):
-    if temp_list2[i] not in temp_list and temp_list3[i] in temp_list:
-        temp_list2[i] = temp_list3[i]
-for i in range(len(temp_list2)):
-    if temp_list2[i] not in temp_list:
-        print('not match')
-
-df_epistat_muni['name'] = temp_list2
-df_epistat_muni_clean = df_epistat_muni[['CASES', 'name', 'Infected population (%)']]
-df_epistat_muni_clean = df_epistat_muni_clean.set_index('name')
-df_epistat_muni_clean.loc['Knesselare'] = [df_epistat_muni_clean.loc['Aalter'][0], df_epistat_muni_clean.loc['Aalter'][1]]
-df_epistat_muni_clean.loc['Nevele'] = [df_epistat_muni_clean.loc['Deinze'][0], df_epistat_muni_clean.loc['Deinze'][1]]
-df_epistat_muni_clean.loc['Zomergem'] = [df_epistat_muni_clean.loc['Waarschoot'][0], df_epistat_muni_clean.loc['Waarschoot'][1]]
-df_epistat_muni_clean.loc['Lovendegem'] = [df_epistat_muni_clean.loc['Waarschoot'][0], df_epistat_muni_clean.loc['Waarschoot'][1]]
-df_epistat_muni_clean.loc['Zingem'] = [df_epistat_muni_clean.loc['Kruishoutem'][0], df_epistat_muni_clean.loc['Kruishoutem'][1]]
-df_epistat_muni_clean.loc['Meeuwen-Gruitrode'] = [df_epistat_muni_clean.loc['Opglabbeek'][0], df_epistat_muni_clean.loc['Opglabbeek'][1]]
-df_epistat_muni_clean.loc['Overpelt'] = [df_epistat_muni_clean.loc['Neerpelt'][0], df_epistat_muni_clean.loc['Neerpelt'][1]]
-df_epistat_muni_clean.loc['Puers'] = [df_epistat_muni_clean.loc['Sint-Amands'][0], df_epistat_muni_clean.loc['Sint-Amands'][1]]
-df_epistat_muni_clean = df_epistat_muni_clean.reset_index()
-df_epistat_muni_clean = df_epistat_muni_clean.rename(columns={"name": "Municipality", "CASES": "Number cases"})
-df_epistat_muni_clean['Number cases (ln)'] = np.log(df_epistat_muni_clean['Number cases']).round(2)
-
 mapbox_access_token = 'pk.eyJ1IjoiZmVkZWdhbGwiLCJhIjoiY2s5azJwaW80MDQxeTNkcWh4bGhjeTN2NyJ9.twKWO-W5wPLX6m9OfrpZCw'
 
 def gen_map(map_data,zoom,lat,lon):
@@ -717,45 +514,6 @@ def map_selection(data):
     zoom = 6
     return gen_map(aux,zoom,50.85045,4.34878)
 
-# Draw weekly mortality
-
-BE_weekly_deaths = clean_data_be(data_path = url_epistat, cases = False, hosp = False, deaths = True)
-BE_weekly_deaths['DEATHS'] = BE_weekly_deaths.groupby(level = 0)['DEATHS'].sum().round(2)
-BE_weekly_deaths = BE_weekly_deaths.groupby(level = 0).first()
-BE_weekly_deaths = BE_weekly_deaths.reset_index()
-BE_weekly_deaths['DATE'] = pd.to_datetime(BE_weekly_deaths['DATE'], format = '%Y-%m-%d')
-BE_weekly_deaths['month'] = BE_weekly_deaths['DATE'].dt.month
-BE_weekly_deaths['day'] = BE_weekly_deaths['DATE'].dt.day
-BE_weekly_deaths = BE_weekly_deaths[:-2][['month','day','DEATHS']]
-
-BE_deaths_bydate = pd.read_excel(path_deaths_BE)
-BE_deaths_bydate['year'] = BE_deaths_bydate['DT_DATE'].dt.year
-BE_deaths_bydate['month'] = BE_deaths_bydate['DT_DATE'].dt.month
-BE_deaths_bydate['day'] = BE_deaths_bydate['DT_DATE'].dt.day
-
-BE_deaths_bydate = BE_deaths_bydate[(BE_deaths_bydate['year'] >= 2015) & (BE_deaths_bydate['year'] <= 2017)]
-BE_deaths_bydate = BE_deaths_bydate[(BE_deaths_bydate['month'] != 2) | (BE_deaths_bydate['day'] != 29)]
-BE_deaths_bydate = BE_deaths_bydate.set_index(['month', 'day'])
-BE_deaths_bydate['mean_MS_NUM_DEATHS'] = BE_deaths_bydate.groupby(['month', 'day'])['MS_NUM_DEATHS'].mean().round(2)
-BE_deaths_bydate = BE_deaths_bydate.reset_index()
-BE_deaths_bydate = BE_deaths_bydate[BE_deaths_bydate['year'] == 2017]
-BE_deaths_bydate = BE_deaths_bydate[['month','day', 'mean_MS_NUM_DEATHS', 'DT_DATE']]
-BE_deaths_bydate['short_date'] = [f'{m}-{d}' for m, d in zip(BE_deaths_bydate['month'], BE_deaths_bydate['day'])]
-
-BE_excess_mortality = BE_deaths_bydate.merge(BE_weekly_deaths, on = ['month', 'day'], how = 'left')
-BE_excess_mortality['weeks'] = 0
-week_index = 1
-counter = 0
-for i in range(len(BE_excess_mortality['short_date'])):
-    BE_excess_mortality.at[counter, 'weeks'] = week_index
-    counter += 1
-    if counter % 7 == 0:
-        week_index += 1
-
-BE_excess_mortality = BE_excess_mortality.set_index('weeks')
-BE_excess_mortality['Weekly COVID-19 deaths'] = BE_excess_mortality.groupby(level = 0)['DEATHS'].sum(min_count = 1).round(2)
-BE_excess_mortality['Weekly average (2015-2017) deaths'] = BE_excess_mortality.groupby(level = 0)['mean_MS_NUM_DEATHS'].sum().round(2)
-
 def excess_mortality_lines(BE_excess_mortality):
     fig = go.Figure()
     temp_data = BE_excess_mortality.copy()
@@ -765,7 +523,7 @@ def excess_mortality_lines(BE_excess_mortality):
                         mode='lines+markers',
                         name= 'Weekly COVID-19 deaths',
                         line=dict(width=3), marker = dict(size = 5, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text",
-                        hovertext = [f"Country: Belgium <br>Weekly deaths: {int(y_covid.iloc[indice]['Weekly COVID-19 deaths']):,}" for indice in range(len(y_covid))]))
+                        hovertext = [f"Country: Belgium <br>Weekly COVID-19 deaths: {int(y_covid.iloc[indice]['Weekly COVID-19 deaths']):,}" for indice in range(len(y_covid))]))
     
     fig.add_trace(go.Scatter(x =  temp_data.index, y = temp_data['Weekly average (2015-2017) deaths'],
                         mode='lines+markers',
@@ -897,11 +655,11 @@ The data from Epistat usually have a delay on the reported cases, by 1-2 days. W
 ''')
 
 markdown_relevant_info = dcc.Markdown('''
-This dashboard is part of a larger set of dashboards available on our website. In particular, here we focus on Belgium.
+We focus on this dashboard on the COVID-19 pandemic in Belgium. This dashboard is part of a larger set of dashboards available [on our website](https://www.learningfromthecurve.net/dashboards/).
 
-Our dashboard focusing on all the countries in the world for which we have available data can be found here.
+Articles by members of the Learning from the Curve team reporting daily information on COVID-19 are available [here](https://www.learningfromthecurve.net/commentaries/).
 
-Articles reporting daily information on COVID-19 are available here.
+Please, report any bug at the following contact address: learningfromthecurve.info@gmail.com.
 ''')
 ############################
 # Bootstrap Grid Layout
@@ -1099,13 +857,13 @@ app.layout = html.Div([
                         "Using the dropdown menu it is possible to switch between data at the aggregate- and province-level. The deceased data are not available at the province-level."
                     ],),],
                 target="aggregate_province_tooltip",
-                style= {'opacity': '0.8'}
+                style= {'opacity': '0.9'}
                 ),
                 html.Div([
                     dbc.RadioItems(
                         id='plots-mode',
-                        options=[{'label': i, 'value': i} for i in ['line', 'bar']],
-                        value='line',
+                        options=[{'label': i, 'value': i} for i in ['Line', 'Bar']],
+                        value='Line',
                         labelStyle={},
                         inline=True,
                         className='mb-1',
@@ -1119,7 +877,7 @@ app.layout = html.Div([
                             "Bar: Reports the latest available data for each province. There might be a mismatch between the date in which the variables are reported. In particular, the data on confirmed cases are usually updated 1 or 2 days after the other statistics."
                         ],),],
                         target="plots-mode",
-                        style= {'opacity': '0.8'}
+                        style= {'opacity': '0.9'}
                     ),
                     dcc.Dropdown(
                         id='demo-dropdown',
@@ -1163,7 +921,7 @@ app.layout = html.Div([
                         "Using the dropdown menu it is possible to choose between statistics at the aggregate level or for a specfic gender."
                     ],),],
                 target="regional_tooltip",
-                style= {'opacity': '0.8'}
+                style= {'opacity': '0.9'}
                 ),
                 html.Div([
                     dbc.RadioItems(
@@ -1183,7 +941,7 @@ app.layout = html.Div([
                             "When displaying the logarithmic scale, the horizontal axis reports the count from the day of the first confirmed case (or death)."
                         ],),],
                         target="reg-log",
-                        style= {'opacity': '0.8'}
+                        style= {'opacity': '0.9'}
                     ),
                     dcc.Dropdown(
                         id='reg-gender',
@@ -1244,7 +1002,7 @@ app.layout = html.Div([
                             "Share of infected population: Share of confirmed cases out of population in 2019 for each region. If a gender is selected the 2019 population is gender- and region- specific."
                         ],),],
                         target="tooltip_mr_sip",
-                        style= {'opacity': '0.8'}
+                        style= {'opacity': '0.9'}
                     ),
                 ],
                 className='card-body text-center'
@@ -1280,7 +1038,7 @@ app.layout = html.Div([
                         "The excess mortality plot shows the weekly expected number of deaths (red curve) as the average number of deaths of 2015-2017. The blue curve plots the number of weekly deaths from COVID-19."
                     ],),],
                     target="life_mortality_tooltip",
-                    style= {'opacity': '0.8'}
+                    style= {'opacity': '0.9'}
                 ),
                 html.Div([
                     dcc.Dropdown(
@@ -1311,7 +1069,7 @@ app.layout = html.Div([
             # Plot excess mortality
             html.Div([
                 html.Div([
-                    dcc.Graph(id='line-graph-excess',)
+                    dcc.Graph(id='line-graph-excess', figure = excess_mortality_lines(BE_excess_mortality))
                 ],
                 className='p-1'
                 ),
@@ -1359,7 +1117,7 @@ app.layout = html.Div([
                     "This tab shows a set of statistics for the provinces in Belgium. We report the latest available data. The data on cumulative statistics are usually updated with a delay of 1-2 days"
                 ],),],
                 target="info_tab_right",
-                style= {'opacity': '0.8'}
+                style= {'opacity': '0.9'}
             ),
         ],
         className="col-md-3 order-md-3",
@@ -1372,28 +1130,34 @@ className="container-fluid"
 )
 
 @app.callback(
-    [Output('line-graph-province', 'figure'),
-    Output('line-graph-lifetable', 'figure'),
-    Output('line-graph-reg-cases', 'figure'),
+    [Output('line-graph-reg-cases', 'figure'),
     Output('line-graph-reg-deaths', 'figure'),
-    Output('line-graph-reg-multiples', 'figure'),
-    Output('line-graph-excess', 'figure')],
-    [Input('demo-dropdown', 'value'),
-    Input('plots-mode', 'value'),
-    Input('lifetable-option', 'value'),
-    Input('reg-log', 'value'),
+    Output('line-graph-reg-multiples', 'figure')],
+    [Input('reg-log', 'value'),
     Input('reg-gender', 'value'),
-    Input('mortality-infected', 'value'),])
-def line_selection(dropdown, line_bar, line_lifetable, linear_log, reg_gender, var_choice):
+    Input('mortality-infected', 'value')])
+def line_selection(linear_log, reg_gender, var_choice):
+    fig1 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'cases', linear_log, reg_gender)
+    fig2 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'deaths', linear_log, reg_gender)
+    fig3 = draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, reg_gender)
+    return fig1, fig2, fig3
+
+@app.callback(
+    Output('line-graph-lifetable', 'figure'),
+    [Input('lifetable-option', 'value'),])
+def line_selection(line_lifetable):
+    fig1 = life_expectancy(life_table_discrete, BE_deaths_lifetable, line_lifetable)
+    return fig1
+
+@app.callback(
+    Output('line-graph-province', 'figure'),
+    [Input('demo-dropdown', 'value'),
+    Input('plots-mode', 'value')])
+def line_selection(dropdown, line_bar):
     if len(dropdown) == 0:
         dropdown = 'Belgium'
     fig1 = draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province = dropdown, plot_mode = line_bar)
-    fig2 = life_expectancy(path_life_table_BE, url_epistat, line_lifetable)
-    fig3 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'cases', linear_log, reg_gender)
-    fig4 = draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, 'deaths', linear_log, reg_gender)
-    fig5 = draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, reg_gender)
-    fig6 = excess_mortality_lines(BE_excess_mortality)
-    return fig1, fig2, fig3, fig4, fig5, fig6
+    return fig1
 
 @app.callback(
     Output("modal-centered-left", "is_open"),
