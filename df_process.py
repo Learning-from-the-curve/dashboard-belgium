@@ -5,8 +5,9 @@ import json
 import pickle
 from pathlib import Path
 from difflib import SequenceMatcher
-
-from functions import *
+from pickle_functions import *
+from app_functions import *
+from process_functions import write_log
 
 path_input = Path.cwd() / 'input'
 Path.mkdir(path_input, exist_ok = True)
@@ -244,11 +245,6 @@ life_table_discrete = life_table_discrete.groupby(level = 0).last()
 
 BE_deaths_lifetable = pd.read_excel(url_epistat, sheet_name = 'MORT')
 
-
-def picklify(dataframe, name):
-    file_write = open(f"./pickles_jar/{name}.pkl", 'wb')
-    pickle.dump(dataframe, file_write)
-    file_write.close()
 
 dataframe_list = [
     [BE_total_prov_merged, 'BE_total_prov_merged'],

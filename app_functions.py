@@ -40,9 +40,10 @@ def ticks_log(df, var):
     label_max = []
     text_label_max = []
     tick = 1
-    for reg in set(df.index):
-        if temp_max < df[var].max():
-            temp_max = df[var].max()
+    df= df.reset_index()
+    if temp_max < df[var].max():
+        temp_max = df[var].max()
+    print(temp_max)
     while tick < temp_max*(0.50):
         label_max.append(tick)
         text_label_max.append(f'{tick:,}')
