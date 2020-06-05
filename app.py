@@ -120,8 +120,8 @@ app.layout = html.Div([
         #dbc.Button("Relevant info", id="open-centered-left", className="btn "),
         dbc.ButtonGroup(
             [
-                dbc.Button("Home", href="https://www.learningfromthecurve.net/", external_link=True, className="py-2"),
-                dbc.Button("Dashboards", href="https://www.learningfromthecurve.net/Dashboards/", external_link=True, className="py-2"),
+                dbc.Button("Home", href="https://www.learningfromthecurve.net/", external_link=False, className="py-2"),
+                dbc.Button("Dashboards", href="https://www.learningfromthecurve.net/Dashboards/", external_link=False, className="py-2"),
             ],
             vertical=True,
             size="sm",

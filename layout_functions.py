@@ -158,11 +158,13 @@ def life_expectancy(life_table_discrete, BE_deaths, line_plot):
                                 "<extra></extra>",
                             )
         plots.append(trace)
-    layout = dict(title = {'text' : f'Life expectancy and COVID-19 deaths', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 450, plot_bgcolor = "white",
+    layout = dict(title = {'text' : f'Life expectancy and COVID-19 deaths', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 450,
+                        plot_bgcolor = '#2c3e50',
+                        paper_bgcolor = '#5AC7C1',
                         showlegend=True,
                         legend = dict(x = 0, y=-0.3, orientation = 'h'),
-                        xaxis = dict(title_text = 'Age', showgrid=True, gridwidth=1, gridcolor='lightgrey'),
-                        yaxis = dict(title_text = 'Probability of death', showgrid=True, gridwidth=1, gridcolor='lightgrey'))
+                        xaxis = dict(title_text = 'Age', showgrid=True, gridwidth=1, gridcolor='#5AC7C1'),
+                        yaxis = dict(title_text = 'Probability of death', showgrid=True, gridwidth=1, gridcolor='#5AC7C1'))
     fig = go.Figure( data = plots, layout = layout)
     return fig
 
@@ -202,11 +204,13 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
             margin=dict(l=0, r=0, t=65, b=0),
             height=350,
             yaxis = {'type': 'linear'},
-            plot_bgcolor = "white",
+            plot_bgcolor = '#2c3e50',
+            paper_bgcolor = '#5AC7C1',
         )
-        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-        fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
+        fig.update_yaxes(zeroline=True, zerolinewidth=1, zerolinecolor='black')
+        fig.update_xaxes(zeroline=True, zerolinewidth=1, zerolinecolor='black')
     elif plot_mode == 'Bar':
         variables = ['Cumulative cases', 'Hospitalized', 'ICU', 'Respiratory', 'Released from hospital']
         temp_data = BE_total_prov_merged.loc[BE_total_prov_merged.index == BE_total_prov_merged.index.max()]
@@ -220,11 +224,13 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
                             "Number: %{y:,}<br>" +
                             "Province: %{x}<br>" +
                             "<extra></extra>",))
-        fig.update_layout(title = {'text' : 'Cases and hospitalization, by province', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 350, plot_bgcolor = "white",
+        fig.update_layout(title = {'text' : 'Cases and hospitalization, by province', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 350,
+                            plot_bgcolor = '#2c3e50',
+                            paper_bgcolor = '#5AC7C1',
                             showlegend=True,
                             legend = dict(x = 0, y=-0.4, orientation = 'h'),
-                            xaxis = dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),
-                            yaxis = dict( showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ','))
+                            xaxis = dict(showgrid=True, gridwidth=1, gridcolor='#5AC7C1'),
+                            yaxis = dict( showgrid=True, gridwidth=1, gridcolor='#5AC7C1', tickformat = ','))
     return fig
 
 def draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, variable, linear_log, gender):
@@ -306,10 +312,11 @@ def draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deat
         margin=dict(l=0, r=0, t=65, b=0),
         #height=350,
         yaxis = {'type': 'linear' if linear_log == 'Linear' else 'log'},
-        plot_bgcolor = "white",
+        plot_bgcolor = '#2c3e50',
+        paper_bgcolor = '#5AC7C1',
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
@@ -386,10 +393,11 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
         ),
         margin=dict(l=0, r=0, t=65, b=0),
         #height=350,
-        plot_bgcolor = "white",
+        plot_bgcolor = '#2c3e50',
+        paper_bgcolor = '#5AC7C1',
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
@@ -470,11 +478,11 @@ def excess_mortality_lines(BE_excess_mortality):
             orientation="h"
         ),
         margin=dict(l=0, r=0, t=65, b=0),
-        #height=350,
-        plot_bgcolor = "white",
+        plot_bgcolor = '#2c3e50',
+        paper_bgcolor = '#5AC7C1',
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey', range = [0, y_covid.index.max() + 1])
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ',')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1', range = [0, y_covid.index.max() + 1])
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1', tickformat = ',')
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
