@@ -12,7 +12,7 @@ import dash_table as dt
 import pickle
 import os
 import time
-from layout_functions import *
+from layout_functions import *  
 from dash.dependencies import Input, Output, State
 from pathlib import Path
 from difflib import SequenceMatcher
@@ -307,25 +307,12 @@ app.layout = html.Div([
 
 
 
-'''
+
     html.Div([
         
         #Col6 Middle
         html.Div([
-            html.Div([
-                html.H3(
-                    children='Belgium Map',
-                    style={},
-                    className='text-center'
-                ),
-                html.P(
-                    children='by number of confirmed cases',
-                    style={},
-                    className='text-center'
-                ),
-            ],
-            className='my-2 mx-auto'
-            ),
+
 
             #Buttons based on screen size
             html.Div([
@@ -335,13 +322,13 @@ app.layout = html.Div([
                         dbc.Button("Regional stats", href="#regionStats", external_link=True),
                         dbc.Button("Province stats", href="#provinceStats", external_link=True),
                     ],
-                    className='text-center d-md-none'                        
+                    className='text-center'                        
                     ),
                 ],
-                className='card-body pt-1 pb-0'
+                className='card-body py-1'
                 ),
             ],
-            className='card my-2 shadow sticky-top'
+            className='card my-2 shadow sticky-top d-md-none'
             ),
             # Aggregate and province plots
             html.Div([
@@ -583,7 +570,7 @@ app.layout = html.Div([
     ],
     className="row"
     ),
-    '''
+    
 ],
 className="container-fluid"
 )
