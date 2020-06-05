@@ -111,7 +111,6 @@ Please, report any bug at the following contact address: learningfromthecurve.in
 ############################
 # Bootstrap Grid Layout
 ############################
-
 app.layout = html.Div([
     html.Div([
     #Header TITLE
@@ -120,8 +119,8 @@ app.layout = html.Div([
         #dbc.Button("Relevant info", id="open-centered-left", className="btn "),
         dbc.ButtonGroup(
             [
-                dbc.Button("Home", href="https://www.learningfromthecurve.net/", external_link=False, className="py-2"),
-                dbc.Button("Dashboards", href="https://www.learningfromthecurve.net/Dashboards/", external_link=False, className="py-2"),
+                dbc.Button("Home", href="https://www.learningfromthecurve.net/", external_link=True, className="py-2"),
+                dbc.Button("Dashboards", href="https://www.learningfromthecurve.net/Dashboards/", external_link=True, className="py-2"),
             ],
             vertical=True,
             size="sm",
@@ -176,7 +175,7 @@ app.layout = html.Div([
             dbc.Card([
                     html.H4(children='Cases: ',),
                     html.H2(f"{int(BE_total_merged['Cumulative cases'].max()):,d}",),
-                #html.P('New daily confirmed cases: ' + f"{daily_confirmed_world:,d}"),
+                    html.P('New daily confirmed cases: ' + f"{int(BE_total_merged['Cumulative cases'][-1]-BE_total_merged['Cumulative cases'][-2]):,d}"),
                 ],
             className='cards cases'
             ),
@@ -189,7 +188,7 @@ app.layout = html.Div([
             dbc.Card([
                     html.H4(children='Deaths: ',),
                     html.H2(f"{int(BE_total_merged['Deceased'].max()):,d}",),
-                #html.P('New daily confirmed cases: ' + f"{daily_confirmed_world:,d}"),
+                    html.P('New daily confirmed cases: ' + f"{int(BE_total_merged['Deceased'][-1]-BE_total_merged['Deceased'][-2]):,d}"),
                 ],
             className='cards deaths'
             ),
@@ -203,7 +202,7 @@ app.layout = html.Div([
                 # Card 3 body
                 html.H4(children='Total hospitalized: '),
                 html.H2(f"{int(BE_total_merged['Total hospitalized'].max()):,d}", className ="text-warning"),
-                #html.P('New daily confirmed cases: ' + f"{daily_confirmed_EU28:,d}"),
+                html.P('New daily confirmed cases: ' + f"{int(BE_total_merged['Total hospitalized'][-1]-BE_total_merged['Total hospitalized'][-2]):,d}", className ="text-warning"),
             ],
             className='cards'
             ),
@@ -216,7 +215,7 @@ app.layout = html.Div([
                 # Card 4 body
                 html.H4(children='Released from hospital: '),
                 html.H2(f"{int(BE_total_merged['Released from hospital'].max()):,d}", className ="text-info"),
-                #html.P('New daily confirmed deaths: ' + f"{daily_deaths_EU28:,d}"),
+                html.P('New daily confirmed deaths: ' + f"{int(BE_total_merged['Released from hospital'][-1]-BE_total_merged['Released from hospital'][-2]):,d}", className ="text-info"),
              ],
             className='cards'
             ),
