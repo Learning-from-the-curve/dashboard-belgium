@@ -7,6 +7,7 @@ from pathlib import Path
 from difflib import SequenceMatcher
 from pickle_functions import *
 from app_functions import *
+from process_functions import write_log
 
 path_input = Path.cwd() / 'input'
 Path.mkdir(path_input, exist_ok = True)
