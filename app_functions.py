@@ -1,42 +1,48 @@
+import pandas as pd
 import numpy as np
+import datetime
+import json
+from pathlib import Path
+from difflib import SequenceMatcher
 
-def growth_rate(data, window):
-    '''
-    Compute the moving average for the grow rate plots
-    input: 
-    dataframe containing the information for each country for each date
-    # of days 
-    output:
-    dataframe containing the growth rate for each country for each date
-    '''
-    df_sub = data.copy()
-    df_sub = df_sub.apply(lambda x: x - x.shift(periods = 1))
-    df_sub.iloc[0] = data.iloc[0]
-    df_GR = df_sub.copy()
-    temp_data = data.copy()
-    for country in list(df_GR):
-        temp_data[country] = temp_data[country].replace(0, np.nan)
-        df_GR[country] = (df_GR[country]/temp_data[country].shift(periods = 1))
-        df_GR[country] = df_GR[country].rolling(window).mean()
-    return df_GR
+def clean_data_be(data_path: str, cases: bool, hosp: bool, deaths: bool):
+    if cases:
+        BE_data = pd.read_excel(data_path, sheet_name = 'CASES_AGESEX')
+    elif hosp:
+        BE_data = pd.read_excel(data_path, sheet_name = 'HOSP')
+    elif deaths:
+        BE_data = pd.read_excel(data_path, sheet_name = 'MORT')
+    if cases or hosp:
+        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'BrabantWallon'] = 'Walloon Brabant'
+        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'VlaamsBrabant'] = 'Flemish Brabant'
+        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'OostVlaanderen'] = 'East Flanders'
+        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'WestVlaanderen'] = 'West Flanders'
+        BE_data['PROVINCE'].loc[BE_data['PROVINCE'] == 'Antwerpen'] = 'Antwerp'
+    if cases:    
+        BE_data = BE_data.loc[BE_data['DATE'].isna() == False]
+        BE_data = BE_data.loc[BE_data['PROVINCE'].isna() == False]
+    if cases or hosp:
+        BE_data = BE_data.set_index(['DATE', 'PROVINCE'])
+    else:
+        BE_data = BE_data.set_index('DATE')
+    return BE_data
 
-def ticks_log(df, selected_countries):
-    '''
-    Used to adjust the max tick (y-axis) for the plots with logarithmic scale
-    input: 
-    dataframe containing the information for each country for each date
-    list of countries 
-    output:
-    list of values for the ticks of y axis
-    list of strings for the ticks of y axis
-    '''
+def cum_deaths_by_date(BE_data):
+    BE_data['deaths_day'] = BE_data.groupby(level = 0)['DEATHS'].sum()
+    BE_data = BE_data.groupby(level = 0).first()
+    BE_data['deaths_cum'] = BE_data['deaths_day'].cumsum()
+    BE_data = BE_data[['deaths_cum']]
+    BE_data = BE_data.rename(columns={'deaths_cum': 'Deceased'})
+    return BE_data
+
+def ticks_log(df, var):
     temp_max = 0
     label_max = []
     text_label_max = []
     tick = 1
-    for country in selected_countries:
-        if temp_max < df[country].max():
-            temp_max = df[country].max()
+    for reg in set(df.index):
+        if temp_max < df.loc['REGION'== reg, 'CASES'].max():
+            temp_max = df.loc['REGION'== reg, 'CASES'].max()
     while tick < temp_max*(0.50):
         label_max.append(tick)
         text_label_max.append(f'{tick:,}')
@@ -44,3 +50,14 @@ def ticks_log(df, selected_countries):
     label_max.append(temp_max)
     text_label_max.append(f'{temp_max:,}')
     return label_max, text_label_max
+
+def aggregate_regions(df, var):
+    df_reg_total = df.copy()
+    df_reg_total = df_reg_total.reset_index()
+    df_reg_total = df_reg_total.set_index(['DATE', 'REGION'])
+    df_reg_total[var] = df_reg_total.groupby(['DATE', 'REGION'])[var].sum()
+    df_reg_total = df_reg_total.groupby(['DATE', 'REGION']).first()
+    df_reg_total = df_reg_total.reset_index('DATE')
+    df_reg_total = df_reg_total[['DATE', var]]
+    df_reg_total[var] = df_reg_total.groupby(level = 0)[var].cumsum()
+    return df_reg_total

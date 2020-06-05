@@ -1,22 +1,17 @@
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
 import datetime
 import json
 import dash
+import pickle
+import os
+from pathlib import Path
+import plotly.graph_objects as go
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import dash_table as dt
-import pickle
-import os
-import time
-from layout_functions import *  
 from dash.dependencies import Input, Output, State
-from pathlib import Path
-from difflib import SequenceMatcher
-from functions import *
+
+from layout_functions import *
 from pickle_functions import unpicklify
 #####################################################################################################################################
 # Boostrap CSS and font awesome . Option 1) Run from codepen directly Option 2) Copy css file to assets folder and run locally
@@ -303,33 +298,26 @@ app.layout = html.Div([
     className="container-fluid cf py-2"
     ),
 
-
-
-
-
-
     html.Div([
-        
-        #Col6 Middle
+    #Buttons based on screen size
+    html.Div([
         html.Div([
-
-
-            #Buttons based on screen size
             html.Div([
-                html.Div([
-                    html.Div([
-                        dbc.Button("Belgium Map", href="#belgiumMap", external_link=True),
-                        dbc.Button("Regional stats", href="#regionStats", external_link=True),
-                        dbc.Button("Province stats", href="#provinceStats", external_link=True),
-                    ],
-                    className='text-center'                        
-                    ),
-                ],
-                className='card-body py-1'
-                ),
+                dbc.Button("Belgium Map", href="#belgiumMap", external_link=True),
+                dbc.Button("Regional stats", href="#regionStats", external_link=True),
+                dbc.Button("Province stats", href="#provinceStats", external_link=True),
             ],
-            className='card my-2 shadow sticky-top d-md-none'
+            className='text-center'                        
             ),
+        ],
+        className='card-body py-1'
+        ),
+    ],
+    className='card my-2  sticky-top d-md-none'
+    ),
+
+    dbc.Row([
+        dbc.Col([         
             # Aggregate and province plots
             html.Div([
                 html.H4(
@@ -377,20 +365,27 @@ app.layout = html.Div([
                 className ='card-body text-center'
                 ),
             ],
-            className='card my-2 shadow'
+            className='card my-2'
             ),
-            
-            # Plots provinces
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='line-graph-province',)
-                ],
-                className='p-1'
-                ),
-            ],
-            style={},
-            className='card my-2 shadow'
-            ),
+        ],
+        width =12
+        )
+    ], 
+    justify="center"
+    ),
+
+    html.Div([
+        html.Div([
+            dcc.Graph(id='line-graph-province', config=config)
+        ],
+        className='p-1'
+        ),
+    ],
+    className='card my-2'
+    ),       
+
+    dbc.Row([
+        dbc.Col([
             # Choose gender and linear or log scale
             html.Div([
                 html.H4(
@@ -441,34 +436,44 @@ app.layout = html.Div([
                 className ='card-body text-center'
                 ),
             ],
-            className='card my-2 shadow'
+            className='card my-2'
             ),
+        ],
+        width =12
+        ),
+        dbc.Col([
             # Regional plots confirmed cases
             html.Div([
                 html.Div([
-                    dcc.Graph(id='line-graph-reg-cases',)
+                    dcc.Graph(id='line-graph-reg-cases', config=config)
                 ],
                 className='p-1'
                 ),
             ],
-            style={},
-            className='card my-2 shadow'
+            className='card my-2 '
             ),
+        ],
+        lg = 6, md = 12
+        ),
+        dbc.Col([
             # Regional plots confirmed deaths
             html.Div([
                 html.Div([
-                    dcc.Graph(id='line-graph-reg-deaths',)
+                    dcc.Graph(id='line-graph-reg-deaths', config=config)
                 ],
                 className='p-1'
                 ),
             ],
-            style={},
-            className='card my-2 shadow'
+            className='card my-2 '
             ),
+        ],
+        lg = 6, md = 12
+        ),
+        dbc.Col([         
             # Other regional variables
             html.Div([
                 html.Div([
-                    html.H5(
+                    html.H4(
                         children='Select a variable:',
                         style={"textDecoration": "underline", "cursor": "pointer"},
                         className='text-center my-2',
@@ -494,20 +499,23 @@ app.layout = html.Div([
                 className='card-body text-center'
                 ),
             ],
-            className='card my-2 shadow'
+            className='card my-2 '
             ),
             # Plots other regional variables
             html.Div([
                 html.Div([
-                    dcc.Graph(id='line-graph-reg-multiples',)
+                    dcc.Graph(id='line-graph-reg-multiples', config=config)
                 ],
                 className='p-1'
                 ),
             ],
             style={},
-            className='card my-2 shadow'
+            className='card my-2 '
             ),
-            
+        ],
+        lg=6, md = 12
+        ),
+        dbc.Col([         
             # Lifetables and excess mortality
             html.Div([
                 html.H4(
@@ -534,43 +542,45 @@ app.layout = html.Div([
                     value = 'COVID-19 deaths, all',
                     ),
                 ],
-                className='card-body pt-1 pb-0'
+                className='card-body text-center'
                 ),
             ],
-            className='card my-2 shadow'
+            className='card my-2 '
             ),
-            
             # Plots lifetable
             html.Div([
                 html.Div([
-                    dcc.Graph(id='line-graph-lifetable',)
+                    dcc.Graph(id='line-graph-lifetable', config=config)
                 ],
                 className='p-1'
                 ),
             ],
-            style={},
-            className='card my-2 shadow'
+            className='card my-2 '
             ),
-            
+        ],
+        lg=6, md = 12
+        ),
+        dbc.Col([
             # Plot excess mortality
             html.Div([
                 html.Div([
-                    dcc.Graph(id='line-graph-excess', figure = excess_mortality_lines(BE_excess_mortality))
+                    dcc.Graph(id='line-graph-excess', figure = excess_mortality_lines(BE_excess_mortality), config=config)
                 ],
                 className='p-1'
                 ),
             ],
-            style={},
-            className='card my-2 shadow'
+            className='card my-2 '
             ),
         ],
-        className="col-md-6 order-md-2"
+        lg = 12
         ),
-
-    ],
-    className="row"
+    ], 
+    justify="center"
     ),
-    
+    ],
+    className="container-fluid cf py-2"
+    ),
+
 ],
 className="container-fluid"
 )
