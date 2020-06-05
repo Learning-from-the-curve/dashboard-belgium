@@ -12,12 +12,12 @@ import dash_table as dt
 import pickle
 import os
 import time
-
+from layout_functions import *
 from dash.dependencies import Input, Output, State
 from pathlib import Path
 from difflib import SequenceMatcher
 from functions import *
-
+from pickle_functions import unpicklify
 #####################################################################################################################################
 # Boostrap CSS and font awesome . Option 1) Run from codepen directly Option 2) Copy css file to assets folder and run locally
 #####################################################################################################################################
@@ -31,6 +31,11 @@ app.title = 'COVID-19 - Belgium dashboard'
 
 #for heroku to run correctly
 server = app.server
+flask_app = app.server
+
+config = {'displayModeBar': False}
+
+
 
 #Overwrite your CSS setting by including style locally
 
@@ -40,7 +45,6 @@ server = app.server
 
 # get data directly from github. The data source provided by Johns Hopkins University.
 
-pickle_path = Path.cwd() / 'pickles_jar'
 pickles_list = [
     'BE_total_prov_merged',
     'BE_total_merged',
@@ -60,575 +64,23 @@ pickles_list = [
     'BE_deaths_lifetable',
     ]
 
-pickle_files = [str(pickle_path) + os.sep + x + '.pkl' for x in pickles_list]
+BE_total_prov_merged = unpicklify(pickles_list[0])
+BE_total_merged = unpicklify(pickles_list[1])
+BE_reg_total_deaths = unpicklify(pickles_list[2]) 
+BE_reg_total_cases = unpicklify(pickles_list[3])
+BE_reg_male_deaths = unpicklify(pickles_list[4])
+BE_reg_female_deaths = unpicklify(pickles_list[5])
+BE_reg_male_cases = unpicklify(pickles_list[6])
+BE_reg_female_cases = unpicklify(pickles_list[7])
+BE_reg_pop = unpicklify(pickles_list[8])
+df_epistat_muni_clean = unpicklify(pickles_list[9])
+df_muni_geo = unpicklify(pickles_list[10])
+BE_excess_mortality = unpicklify(pickles_list[11])
+BE_total_prov_merged = unpicklify(pickles_list[12])
+available_provinces = unpicklify(pickles_list[13])
+life_table_discrete = unpicklify(pickles_list[14])
+BE_deaths_lifetable = unpicklify(pickles_list[15])
 
-def unpicklify(path):
-    file_read = open(path, 'rb')
-    dataframe = pickle.load(file_read)
-    file_read.close()
-    return dataframe
-
-BE_total_prov_merged = unpicklify(pickle_files[0])
-BE_total_merged = unpicklify(pickle_files[1])
-BE_reg_total_deaths = unpicklify(pickle_files[2]) 
-BE_reg_total_cases = unpicklify(pickle_files[3])
-BE_reg_male_deaths = unpicklify(pickle_files[4])
-BE_reg_female_deaths = unpicklify(pickle_files[5])
-BE_reg_male_cases = unpicklify(pickle_files[6])
-BE_reg_female_cases = unpicklify(pickle_files[7])
-BE_reg_pop = unpicklify(pickle_files[8])
-df_epistat_muni_clean = unpicklify(pickle_files[9])
-df_muni_geo = unpicklify(pickle_files[10])
-BE_excess_mortality = unpicklify(pickle_files[11])
-BE_total_prov_merged = unpicklify(pickle_files[12])
-available_provinces = unpicklify(pickle_files[13])
-life_table_discrete = unpicklify(pickle_files[14])
-BE_deaths_lifetable = unpicklify(pickle_files[15])
-
-def life_expectancy(life_table_discrete, BE_deaths, line_plot):
-    plots = []
-    if line_plot == 'COVID-19 deaths, all':
-        BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
-        BE_deaths = BE_deaths.set_index('AGEGROUP')
-        BE_deaths['deaths_by_age'] = BE_deaths.groupby(level = 0)['DEATHS'].sum()
-        BE_deaths = BE_deaths.groupby(level = 0).first()
-        BE_deaths = BE_deaths[['DEATHS', 'deaths_by_age']]
-        BE_deaths['cum_deaths'] = BE_deaths['deaths_by_age'].cumsum()
-        BE_deaths['tot_deaths'] = BE_deaths['deaths_by_age'].sum()
-        BE_deaths['cdf_deaths'] = BE_deaths['cum_deaths']/BE_deaths['tot_deaths']
-        BE_deaths = BE_deaths.reset_index()
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '0-24'] = '12'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '25-44'] = '30'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '45-64'] = '50'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '65-74'] = '70'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '75-84'] = '80'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '85+'] = '90'
-        BE_deaths['cdf_deaths'] = BE_deaths['cdf_deaths'].round(2)
-        trace = go.Scatter(y = life_table_discrete['avg_density_all'], x = life_table_discrete.index, mode = 'lines+markers', name = 'Life expectancy (all)', line = dict(width = 3),
-                                marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                hovertemplate=
-                                "Probability: %{y:.2f}<br>" +
-                                "Age: %{x}<br>" +
-                                "<extra></extra>",
-                            )
-        plots.append(trace)
-        trace = go.Scatter(y = BE_deaths['cdf_deaths'], x = BE_deaths['AGEGROUP'], mode = 'lines+markers', name = 'COVID-19 deaths (all)', line = dict(width = 3),
-                                marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                hovertemplate=
-                                "Probability: %{y:.2f}<br>" +
-                                "Age: %{x}<br>" +
-                                "<extra></extra>",
-                            )
-        plots.append(trace)
-    elif line_plot == 'COVID-19 deaths, female' or line_plot == 'COVID-19 deaths, male':
-        BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
-        BE_deaths = BE_deaths.set_index(['SEX', 'AGEGROUP'])
-        BE_deaths['sum_deaths'] = BE_deaths.groupby(level=['SEX','AGEGROUP'])['DEATHS'].sum()
-        BE_deaths = BE_deaths.groupby(level=['SEX','AGEGROUP']).first()
-        BE_deaths = BE_deaths.reset_index('AGEGROUP')
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '0-24'] = '12'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '25-44'] = '30'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '45-64'] = '50'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '65-74'] = '70'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '75-84'] = '80'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '85+'] = '90'
-        BE_deaths_clean = BE_deaths[['AGEGROUP', 'sum_deaths']]
-        BE_deaths_clean = BE_deaths_clean.reset_index('SEX')
-        new_row = {'AGEGROUP': '12', 'SEX':'M', 'sum_deaths':0}
-        BE_deaths_clean = BE_deaths_clean.append(new_row, ignore_index=True)
-        BE_deaths_clean = BE_deaths_clean.set_index(['SEX', 'AGEGROUP'])
-        BE_deaths_clean = BE_deaths_clean.sort_index(level = ['SEX', 'AGEGROUP'])
-        BE_deaths_clean['cum_deaths'] = BE_deaths_clean.groupby(level=['SEX'])['sum_deaths'].cumsum()
-        BE_deaths_clean = BE_deaths_clean.reset_index(['AGEGROUP'])
-        BE_deaths_clean['tot_deaths'] = BE_deaths_clean.groupby(level=['SEX'])['sum_deaths'].sum()
-        BE_deaths_clean['cdf_deaths'] = BE_deaths_clean['cum_deaths']/BE_deaths_clean['tot_deaths']
-        BE_deaths_clean = BE_deaths_clean.reset_index(['SEX'])
-        BE_deaths_male = BE_deaths_clean[BE_deaths_clean['SEX'] == 'M']
-        BE_deaths_female = BE_deaths_clean[BE_deaths_clean['SEX'] == 'F']
-        if line_plot == 'COVID-19 deaths, male':
-            trace = go.Scatter(y = life_table_discrete['avg_density_male'], x =life_table_discrete.index, mode = 'lines+markers', name = 'Life expectancy (male)', line = dict(width = 3),
-                                    marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                    hovertemplate=
-                                    "Probability: %{y:.2f}<br>" +
-                                    "Age: %{x}<br>" +
-                                    "<extra></extra>",
-                                )
-            plots.append(trace)
-            trace = go.Scatter(y = BE_deaths_male['cdf_deaths'], x = BE_deaths_male['AGEGROUP'], mode = 'lines+markers', name = 'COVID-19 deaths (male)', line = dict(width = 3),
-                                    marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                    hovertemplate=
-                                    "Probability: %{y:.2f}<br>" +
-                                    "Age: %{x}<br>" +
-                                    "<extra></extra>",
-                                )
-            plots.append(trace)
-        elif line_plot == 'COVID-19 deaths, female':
-            trace = go.Scatter(y = life_table_discrete['avg_density_female'], x = life_table_discrete.index, mode = 'lines+markers', name = 'Life expectancy (female)', line = dict(width = 3),
-                                    marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                    hovertemplate=
-                                    "Probability: %{y:.2f}<br>" +
-                                    "Age: %{x}<br>" +
-                                    "<extra></extra>",
-                                )
-            plots.append(trace)
-            trace = go.Scatter(y = BE_deaths_female['cdf_deaths'], x = BE_deaths_female['AGEGROUP'], mode = 'lines+markers', name = 'COVID-19 deaths (female)', line = dict(width = 3),
-                                    marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                    hovertemplate=
-                                    "Probability: %{y:.2f}<br>" +
-                                    "Age: %{x}<br>" +
-                                    "<extra></extra>",
-                                )
-            plots.append(trace)
-    elif line_plot == 'COVID-19 deaths, by region':
-        BE_deaths = BE_deaths.loc[BE_deaths['AGEGROUP'].isna() == False]
-        BE_deaths = BE_deaths.set_index(['REGION', 'AGEGROUP'])
-        BE_deaths['sum_deaths'] = BE_deaths.groupby(level=['REGION','AGEGROUP'])['DEATHS'].sum()
-        BE_deaths = BE_deaths.groupby(level=['REGION','AGEGROUP']).first()
-        BE_deaths = BE_deaths.reset_index('AGEGROUP')
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '0-24'] = '12'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '25-44'] = '30'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '45-64'] = '50'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '65-74'] = '70'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '75-84'] = '80'
-        BE_deaths['AGEGROUP'].loc[BE_deaths['AGEGROUP'] == '85+'] = '90'
-        BE_deaths_clean = BE_deaths[['AGEGROUP', 'sum_deaths']]
-        BE_deaths_clean = BE_deaths_clean.reset_index()
-        BE_deaths_clean = BE_deaths_clean.set_index(['REGION','AGEGROUP'])
-        BE_deaths_clean['cum_deaths'] = BE_deaths_clean.groupby(level=[['REGION']])['sum_deaths'].cumsum()
-        BE_deaths_clean = BE_deaths_clean.reset_index(['AGEGROUP'])
-        BE_deaths_clean['tot_deaths'] = BE_deaths_clean.groupby(level=['REGION'])['sum_deaths'].sum()
-        BE_deaths_clean['cdf_deaths'] = BE_deaths_clean['cum_deaths']/BE_deaths_clean['tot_deaths']
-        BE_deaths_clean = BE_deaths_clean.reset_index(['REGION'])
-        BE_deaths_brussels = BE_deaths_clean[BE_deaths_clean['REGION'] == 'Brussels']
-        BE_deaths_flanders = BE_deaths_clean[BE_deaths_clean['REGION'] == 'Flanders']
-        BE_deaths_wallonia = BE_deaths_clean[BE_deaths_clean['REGION'] == 'Wallonia']
-        new_row = {'REGION': 'Brussels', 'AGEGROUP': '12', 'sum_deaths':0, 'cum_deaths': 0, 'tot_deaths': 0, 'cdf_deaths': 0.000000}
-        BE_deaths_brussels = BE_deaths_brussels.append(new_row, ignore_index=True)
-        BE_deaths_brussels = BE_deaths_brussels.sort_values(by = ['AGEGROUP'])
-        new_row = {'REGION': 'Wallonia', 'AGEGROUP': '12', 'sum_deaths':0, 'cum_deaths': 0, 'tot_deaths': 0, 'cdf_deaths': 0.000000}
-        BE_deaths_wallonia = BE_deaths_wallonia.append(new_row, ignore_index=True)
-        BE_deaths_wallonia = BE_deaths_wallonia.sort_values(by = ['AGEGROUP'])
-        trace = go.Scatter(y = BE_deaths_brussels['cdf_deaths'], x = BE_deaths_brussels['AGEGROUP'], mode = 'lines+markers', name = 'COVID-19 deaths (Brussels)', line = dict(width = 3),
-                                marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                hovertemplate=
-                                "Probability: %{y:.2f}<br>" +
-                                "Age: %{x}<br>" +
-                                "<extra></extra>",
-                            )
-        plots.append(trace)
-        trace = go.Scatter(y = BE_deaths_flanders['cdf_deaths'], x = BE_deaths_flanders['AGEGROUP'], mode = 'lines+markers', name = 'COVID-19 deaths (Flanders)', line = dict(width = 3),
-                                marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                hovertemplate=
-                                "Probability: %{y:.2f}<br>" +
-                                "Age: %{x}<br>" +
-                                "<extra></extra>",
-                            )
-        plots.append(trace)
-        trace = go.Scatter(y = BE_deaths_wallonia['cdf_deaths'], x = BE_deaths_wallonia['AGEGROUP'], mode = 'lines+markers', name = 'COVID-19 deaths (Wallonia)', line = dict(width = 3),
-                                marker = dict(size = 6, line = dict(width = 1,color = 'DarkSlateGrey')),
-                                hovertemplate=
-                                "Probability: %{y:.2f}<br>" +
-                                "Age: %{x}<br>" +
-                                "<extra></extra>",
-                            )
-        plots.append(trace)
-    layout = dict(title = {'text' : f'Life expectancy and COVID-19 deaths', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 450, plot_bgcolor = "white",
-                        showlegend=True,
-                        legend = dict(x = 0, y=-0.3, orientation = 'h'),
-                        xaxis = dict(title_text = 'Age', showgrid=True, gridwidth=1, gridcolor='lightgrey'),
-                        yaxis = dict(title_text = 'Probability of death', showgrid=True, gridwidth=1, gridcolor='lightgrey'))
-    fig = go.Figure( data = plots, layout = layout)
-    return fig
-
-def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province, plot_mode):
-    fig = go.Figure()
-    if plot_mode == 'Line':
-        if selected_province == 'Belgium':
-            variables = ['Cumulative cases', 'Deceased', 'Hospitalized', 'ICU', 'Respiratory', 'Released from hospital', 'Total hospitalized']
-            y = BE_total_merged.copy()
-            x = y.index
-        else:
-            variables = ['Cumulative cases', 'Hospitalized', 'ICU', 'Respiratory', 'Released from hospital', 'Total hospitalized']
-            y = BE_total_prov_merged.loc[BE_total_prov_merged['PROVINCE'] == selected_province].copy()
-            x = y.index
-        for var in variables:
-            fig.add_trace(go.Scatter(x =  x, y = y[var],
-                            mode='lines+markers',
-                            name=var,
-                            line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                            hovertext = [f"Province: {selected_province} <br>{var}: {y.iloc[indice][var]:,} <br>Date: {x[indice]}" for indice in range(len(y))]))
-        fig.update_layout(title= 'Data by province')
-        fig.update_xaxes(tickformat = '%d %B (%a)<br>%Y')
-        fig.update_yaxes(tickformat = ',')
-        fig.update_layout(
-            hovermode='closest',
-            legend=dict(
-                traceorder="normal",
-                font=dict(
-                    family="sans-serif",
-                    size=12,
-                ),
-                borderwidth=0,
-                x = 0,
-                y = -0.3,
-                orientation = 'h',
-            ),
-            margin=dict(l=0, r=0, t=65, b=0),
-            height=350,
-            yaxis = {'type': 'linear'},
-            plot_bgcolor = "white",
-        )
-        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-        fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
-    elif plot_mode == 'Bar':
-        variables = ['Cumulative cases', 'Hospitalized', 'ICU', 'Respiratory', 'Released from hospital']
-        temp_data = BE_total_prov_merged.loc[BE_total_prov_merged.index == BE_total_prov_merged.index.max()]
-        temp_data = temp_data.set_index('PROVINCE')
-        for prov in set(BE_total_prov_merged['PROVINCE']):
-            temp_data.at[prov, 'Cumulative cases'] = BE_total_prov_merged.loc[BE_total_prov_merged['PROVINCE'] == prov]['Cumulative cases'].max()
-        for var in variables:
-            fig.add_trace(go.Bar(x =  temp_data.index, y = temp_data[var],
-                            name=var,
-                            hovertemplate=
-                            "Number: %{y:,}<br>" +
-                            "Province: %{x}<br>" +
-                            "<extra></extra>",))
-        fig.update_layout(title = {'text' : 'Cases and hospitalization, by province', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 350, plot_bgcolor = "white",
-                            showlegend=True,
-                            legend = dict(x = 0, y=-0.4, orientation = 'h'),
-                            xaxis = dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),
-                            yaxis = dict( showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ','))
-    return fig
-
-def draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, variable, linear_log, gender):
-    fig = go.Figure()
-    if variable == 'cases':
-        if gender == 'Male':
-            temp_df = BE_reg_male_cases.copy()
-        elif gender == 'Female':
-            temp_df = BE_reg_female_cases.copy()
-        else:
-            temp_df = BE_reg_total_cases.copy()
-        label_max, text_label_max = ticks_log(temp_df, 'CASES')
-        for reg in set(temp_df.index):
-            temp_data = temp_df.copy()
-            temp_data = temp_data.reset_index()
-            temp_data = temp_data.loc[temp_data['REGION'] == reg]
-            y = temp_data.copy()
-            if linear_log == 'Log':
-                x = [x for x in range(len(y['DATE']))]
-                fig.add_trace(go.Scatter(x =  x, y = y['CASES'],
-                                    mode='lines+markers',
-                                    name=reg,
-                                    line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                                    hovertext = [f"Region: {reg} <br>Cases: {y.iloc[indice]['CASES']:,} <br>Days: {x[indice]}" for indice in range(len(y))]))
-                fig.update_yaxes(tickvals = label_max, ticktext = text_label_max)
-            else:
-                fig.add_trace(go.Scatter(x =  y['DATE'], y = y['CASES'],
-                                    mode='lines+markers',
-                                    name=reg,
-                                    line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                                    hovertext = [f"Region: {reg} <br>Cases: {y.iloc[indice]['CASES']:,} <br>Date: {str(y.iloc[indice]['DATE'])[:10]}" for indice in range(len(y))]))
-                fig.update_xaxes(tickformat = '%d %B (%a)<br>%Y')
-                fig.update_yaxes(tickformat = ',')
-        fig.update_layout(title= 'Total confirmed cases')
-    elif variable == 'deaths':
-        if gender == 'Male':
-            temp_df = BE_reg_male_deaths.copy()
-        elif gender == 'Female':
-            temp_df = BE_reg_female_deaths.copy()
-        else:
-            temp_df = BE_reg_total_deaths.copy()
-        label_max, text_label_max = ticks_log(temp_df, 'DEATHS')
-        for reg in set(temp_df.index):
-            temp_data = temp_df.copy()
-            temp_data = temp_data.reset_index()
-            temp_data = temp_data.loc[temp_data['REGION'] == reg]
-            y = temp_data.copy()
-            if linear_log == 'Log':
-                x = [x for x in range(len(y['DATE']))]
-                fig.add_trace(go.Scatter(x =  x, y = y['DEATHS'],
-                                    mode='lines+markers',
-                                    name=reg,
-                                    line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                                    hovertext = [f"Region: {reg} <br>Deaths: {y.iloc[indice]['DEATHS']:,} <br>Days: {x[indice]}" for indice in range(len(y))]))
-                fig.update_yaxes(tickvals = label_max, ticktext = text_label_max)
-            else:
-                fig.add_trace(go.Scatter(x =  y['DATE'], y = y['DEATHS'],
-                                    mode='lines+markers',
-                                    name=reg,
-                                    line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                                    hovertext = [f"Region: {reg} <br>Deaths: {y.iloc[indice]['DEATHS']:,} <br>Date: {str(y.iloc[indice]['DATE'])[:10]}" for indice in range(len(y))]))
-                fig.update_xaxes(tickformat = '%d %B (%a)<br>%Y')
-                fig.update_yaxes(tickformat = ',')
-        fig.update_layout(title= 'Total deaths')
-
-    fig.update_layout(
-        hovermode='closest',
-        legend=dict(
-            traceorder="normal",
-            font=dict(
-                family="sans-serif",
-                size=12,
-            ),
-            borderwidth=0,
-            x=0,
-            y=-0.4,
-            orientation="h"
-        ),
-        margin=dict(l=0, r=0, t=65, b=0),
-        #height=350,
-        yaxis = {'type': 'linear' if linear_log == 'Linear' else 'log'},
-        plot_bgcolor = "white",
-    )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
-
-    return fig
-
-def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, var_choice, gender):
-    fig = go.Figure()
-    if var_choice == 'Mortality rate':
-        if gender == 'Male':
-            temp_df = BE_reg_male_deaths.copy()
-        elif gender == 'Female':
-            temp_df = BE_reg_female_deaths.copy()
-        else:
-            temp_df = BE_reg_total_deaths.copy()
-        for reg in set(temp_df.index):
-            temp_data = temp_df.copy()
-            temp_data = temp_data.reset_index()
-            temp_data = temp_data.loc[temp_data['REGION'] == reg]
-            if reg == 'Flanders':
-                index = 0
-            elif reg == 'Wallonia':
-                index = 1
-            elif reg == 'Brussels':
-                index = 2
-            y = temp_data.copy()
-            y['DEATHS'] = (temp_data['DEATHS']/BE_reg_pop.iloc[index][gender])
-            x = [x for x in range(len(y['DATE']))]
-            fig.add_trace(go.Scatter(x =  x, y = y['DEATHS'],
-                                mode='lines+markers',
-                                name=reg,
-                                line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                                hovertext = [f"Region: {reg} <br>Mortality rate: {y.iloc[indice]['DEATHS']*100:.2f}% <br>Days: {x[indice]} <br>Date: {y.iloc[indice]['DATE']}" for indice in range(len(y))]))
-            fig.update_yaxes(tickformat = '.2%')
-        fig.update_layout(title= 'Mortality rate')
-    elif var_choice == 'Share of infected population':
-        if gender == 'Male':
-            temp_df = BE_reg_male_cases.copy()
-        elif gender == 'Female':
-            temp_df = BE_reg_female_cases.copy()
-        else:
-            temp_df = BE_reg_total_cases.copy()
-        for reg in set(temp_df.index):
-            temp_data = temp_df.copy()
-            temp_data = temp_data.reset_index()
-            temp_data = temp_data.loc[temp_data['REGION'] == reg]
-            if reg == 'Flanders':
-                index = 0
-            elif reg == 'Wallonia':
-                index = 1
-            elif reg == 'Brussels':
-                index = 2
-            y = temp_data.copy()
-            y['CASES'] = (temp_data['CASES']/BE_reg_pop.iloc[index][gender])
-            x = [x for x in range(len(y['DATE']))]
-            fig.add_trace(go.Scatter(x =  x, y = y['CASES'],
-                                mode='lines+markers',
-                                name=reg,
-                                line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                                hovertext = [f"Region: {reg} <br>Share of infected population: {y.iloc[indice]['CASES']*100:.2f}% <br>Days: {x[indice]} <br>Date: {y.iloc[indice]['DATE']}" for indice in range(len(y))]))
-            fig.update_yaxes(tickformat = '.2%')
-        fig.update_layout(title= 'Share of infected population')
-
-    fig.update_layout(
-        hovermode='closest',
-        legend=dict(
-            traceorder="normal",
-            font=dict(
-                family="sans-serif",
-                size=12,
-            ),
-            borderwidth=0,
-            x=0,
-            y=-0.4,
-            orientation="h"
-        ),
-        margin=dict(l=0, r=0, t=65, b=0),
-        #height=350,
-        plot_bgcolor = "white",
-    )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
-
-    return fig
-
-mapbox_access_token = 'pk.eyJ1IjoiZmVkZWdhbGwiLCJhIjoiY2s5azJwaW80MDQxeTNkcWh4bGhjeTN2NyJ9.twKWO-W5wPLX6m9OfrpZCw'
-
-def gen_map(map_data,zoom,lat,lon):
-    return {
-        "data": [{
-            "type": "choroplethmapbox",  #specify the type of data to generate, in this case, scatter map box is used
-            "locations": list(df_epistat_muni_clean['Municipality']),
-            "geojson": df_muni_geo,
-            "featureidkey": 'properties.name',
-            "z": np.log(df_epistat_muni_clean['Number cases']).round(2),
-            "hoverinfo": "text",         
-            "hovertext": [f"Municipality: {df_epistat_muni_clean.iloc[indice]['Municipality']} <br>Number of cases: {int(df_epistat_muni_clean.iloc[indice]['Number cases']):,} <br>Share of population infected: {df_epistat_muni_clean.iloc[indice]['Infected population (%)']:,}%" for indice in range(len(df_epistat_muni_clean['Municipality']))],
-            'colorbar': dict(thickness=20, ticklen=3),
-            'colorscale': 'Geyser',
-            'autocolorscale': False,
-            'showscale': False,
-        },
-        ],
-        "layout": dict(
-            autoscale = True,
-            height=550,
-            titlefont=dict(size='14'),
-            margin=dict(
-                l=0,
-                r=0,
-                b=0,
-                t=0
-            ),
-            hovermode="closest",
-            mapbox=dict(
-                accesstoken=mapbox_access_token,
-                style='mapbox://styles/mapbox/light-v10',
-                center=dict(
-                    lon=lon,
-                    lat=lat,
-                ),
-                zoom=zoom,
-            )
-        ),
-    }
-
-def map_selection(data):
-    aux = data
-    zoom = 6
-    return gen_map(aux,zoom,50.85045,4.34878)
-
-def excess_mortality_lines(BE_excess_mortality):
-    fig = go.Figure()
-    temp_data = BE_excess_mortality.copy()
-    temp_data_covid = temp_data.loc[temp_data['Weekly COVID-19 deaths'].isna() == False]
-    y_covid = temp_data_covid.copy()
-    fig.add_trace(go.Scatter(x =  y_covid.index, y = y_covid['Weekly COVID-19 deaths'],
-                        mode='lines+markers',
-                        name= 'Weekly COVID-19 deaths',
-                        line=dict(width=3), marker = dict(size = 5, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text",
-                        hovertext = [f"Country: Belgium <br>Weekly COVID-19 deaths: {int(y_covid.iloc[indice]['Weekly COVID-19 deaths']):,}" for indice in range(len(y_covid))]))
-    
-    fig.add_trace(go.Scatter(x =  temp_data.index, y = temp_data['Weekly average (2015-2017) deaths'],
-                        mode='lines+markers',
-                        name= 'Weekly deaths, average 2015-2017',
-                        line=dict(width=3), marker = dict(size = 5, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text",
-                        hovertext = [f"Country: Belgium <br>Weekly deaths, average 2015-2017: {int(temp_data.iloc[indice]['Weekly average (2015-2017) deaths']):,}" for indice in range(len(temp_data))]))
-    
-    fig.update_layout(
-        title= 'Excess mortality (weekly deaths)',
-        hovermode='closest',
-        legend=dict(
-            traceorder="normal",
-            font=dict(
-                family="sans-serif",
-                size=12,
-            ),
-            borderwidth=0,
-            x=0,
-            y=-0.4,
-            orientation="h"
-        ),
-        margin=dict(l=0, r=0, t=65, b=0),
-        #height=350,
-        plot_bgcolor = "white",
-    )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey', range = [0, y_covid.index.max() + 1])
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ',')
-    fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
-
-    return fig
-
-def tab_right_provinces(BE_total_prov_merged):
-    temp_data = BE_total_prov_merged.copy()
-    return html.Div([
-        html.Ul([
-            html.Li([
-                html.Div([
-                        dbc.ListGroupItem([
-                            dbc.ListGroupItemHeading(f'{prov}:'),
-                            dbc.ListGroupItemText(f"Confirmed cases: {int(temp_data.loc[temp_data['PROVINCE'] == prov]['Cumulative cases'].max()):,}", color = 'info'),
-                            dbc.ListGroupItemText(f"Hospitalized: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Hospitalized']):,}", color = 'warning'),
-                            dbc.ListGroupItemText(f"ICU: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['ICU']):,}", color = 'danger'),
-                            dbc.ListGroupItemText(f"Respiratory: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Respiratory']):,}", color = 'darning'),
-                            dbc.ListGroupItemText(f"Released from hospital: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Released from hospital']):,}", color = 'info'),
-                            dbc.ListGroupItemText(f"Total hospitalized: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Total hospitalized']):,}", color = 'warning'),],
-                                        className="border-top-0 border-left-0 border-right-0") for prov in sorted(list(set(BE_total_prov_merged['PROVINCE'])))
-                ],
-                className='media-body border-0'
-                ),
-            ],
-            className='media border-0'
-            ),   
-        ],
-        className='list-unstyled'
-        ),
-    ],
-    style={ "height": "600px" },
-    className="overflow-auto"
-    ),
-    className="border-0",
-
-def tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, BE_reg_pop, region):
-    if region == 'Flanders':
-        index = 0
-    elif region == 'Wallonia':
-        index = 1
-    elif region == 'Brussels':
-        index = 2
-    return html.Div([
-        html.Ul([
-            html.Li([
-                html.Div([
-                        dbc.ListGroupItem([
-                            dbc.ListGroupItemText(f"Confirmed cases: {int(BE_reg_total_cases.loc[region, 'CASES'].max()):,}", color = 'info'),
-                            dbc.ListGroupItemText(f"Confirmed cases (female): {int(BE_reg_female_cases.loc[region, 'CASES'].max()):,}", color = 'info'),
-                            dbc.ListGroupItemText(f"Confirmed cases (male): {int(BE_reg_male_cases.loc[region, 'CASES'].max()):,}", color = 'info'),
-                            dbc.ListGroupItemText(f"Deaths: {int(BE_reg_total_deaths.loc[region, 'DEATHS'].max()):,}", color = 'danger'),
-                            dbc.ListGroupItemText(f"Deaths (female): {int(BE_reg_female_deaths.loc[region, 'DEATHS'].max()):,}", color = 'danger'),
-                            dbc.ListGroupItemText(f"Deaths (male): {int(BE_reg_male_deaths.loc[region, 'DEATHS'].max()):,}", color = 'danger'),
-                            dbc.ListGroupItemText(f"Mortality rate: {(BE_reg_total_deaths.loc[region, 'DEATHS'].max()/BE_reg_pop.iloc[index]['Total'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Mortality rate (female): {(BE_reg_female_deaths.loc[region, 'DEATHS'].max()/BE_reg_pop.iloc[index]['Female'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Mortality rate (male): {(BE_reg_male_deaths.loc[region, 'DEATHS'].max()/BE_reg_pop.iloc[index]['Male'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Share of infected population: {(BE_reg_total_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Total'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Share of infected population (female): {(BE_reg_female_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Female'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Share of infected population (male): {(BE_reg_male_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Male'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Population in 2019: {int(BE_reg_pop.iloc[index]['Total']):,}", color = 'success'),
-                            dbc.ListGroupItemText(f"Population in 2019 (female): {int(BE_reg_pop.iloc[index]['Female']):,}", color = 'success'),
-                            dbc.ListGroupItemText(f"Population in 2019 (male): {int(BE_reg_pop.iloc[index]['Male']):,}", color = 'success'),
-                    ],
-                    className="border-top-0 border-left-0 border-right-0"
-                        )
-                ],
-                className='media-body border-0'
-                ),
-            ],
-            className='media border-0'
-            ),   
-        ],
-        className='list-unstyled'
-        ),
-    ],
-    style={ "height": "600px" },
-    className="overflow-auto"
-    ),
-    className="border-0",
 
 children_right_tab = tab_right_provinces(BE_total_prov_merged)
 tab_right = dbc.Card(children = children_right_tab)
@@ -666,31 +118,34 @@ Please, report any bug at the following contact address: learningfromthecurve.in
 ############################
 
 app.layout = html.Div([
-    
+    html.Div([
     #Header TITLE
     html.Div([
         #Info Modal Button LEFT
-        dbc.Button("Relevant info", id="open-centered-left", className="btn-sm"),
-        dbc.Modal(
+        #dbc.Button("Relevant info", id="open-centered-left", className="btn "),
+        dbc.ButtonGroup(
             [
-                dbc.ModalHeader("Relevant information"),
-                dbc.ModalBody(children = markdown_relevant_info),
-                dbc.ModalFooter(
-                    dbc.Button(
-                        "Close", id="close-centered-left", className="ml-auto"
-                    )
-                ),
+                dbc.Button("Home", href="https://www.learningfromthecurve.net/", external_link=True, className="py-2"),
+                dbc.Button("Dashboards", href="https://www.learningfromthecurve.net/Dashboards/", external_link=True, className="py-2"),
             ],
-            id="modal-centered-left",
-            centered=True,
+            vertical=True,
+            size="sm",
         ),
-        #H1 Title
-        html.H1(
-            children='COVID-19 - Belgium',
+        #H2 Title
+        html.H2(
+            children='COVID-19 Belgium',
             className="text-center",
         ),
         #Info Modal Button RIGHT
-        dbc.Button("Datasets info", id="open-centered-right", className="btn-sm"),
+        #dbc.Button("Datasets info", id="open-centered-right", className="btn "),
+        dbc.ButtonGroup(
+            [
+                dbc.Button("Info", id="open-centered-left", className="py-2"),
+                dbc.Button("Datasets", id="open-centered-right", className="py-2"),
+            ],
+            vertical=True,
+            size="sm",
+        ),
         dbc.Modal(
             [
                 dbc.ModalHeader("Information on datasets used"),
@@ -704,101 +159,155 @@ app.layout = html.Div([
             id="modal-centered-right",
             centered=True,
         ),
+        dbc.Modal(
+            [
+                dbc.ModalHeader("Relevant information"),
+                dbc.ModalBody(children = markdown_relevant_info),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="close-centered-left", className="ml-auto")
+                ),
+            ],
+            id="modal-centered-left",
+            centered=True,
+        ),
     ],
-    className="d-flex justify-content-md-between my-2"
+    className="topRow d-flex justify-content-between align-items-center mb-2"
     ),
-    
+
     #First Row CARDS 3333
-    html.Div([
-        html.Div([
+    dbc.Row([
+        dbc.Col([
             #Card 1
-            html.Div([
-                # Card 1 body
-                html.Div([
-                    html.H4(
-                        children='Cases: ',
-                        className='card-title'
-                    ),
-                    html.H4(f"{int(BE_total_merged['Cumulative cases'].max()):,d}",
-                        className='card-text'
-                    ),
+            dbc.Card([
+                    html.H4(children='Cases: ',),
+                    html.H2(f"{int(BE_total_merged['Cumulative cases'].max()):,d}",),
+                #html.P('New daily confirmed cases: ' + f"{daily_confirmed_world:,d}"),
                 ],
-                className="card-body"
-                )
-            ],
-            className='card my-2 text-center shadow'
+            className='cards cases'
             ),
         ],
-        className="col-md-3"
-        ),
-        html.Div([
+        lg = 3, xs = 12
+        ),     
+
+        dbc.Col([
             #Card 2
-            html.Div([
-                # Card 2 body
-                html.Div([
-                    html.H4(
-                        children='Deaths: ',
-                        className='card-title'
-                    ),
-                    html.H4(f"{int(BE_total_merged['Deceased'].max()):,d}",
-                        className='card-text'
-                    ),
+            dbc.Card([
+                    html.H4(children='Deaths: ',),
+                    html.H2(f"{int(BE_total_merged['Deceased'].max()):,d}",),
+                #html.P('New daily confirmed cases: ' + f"{daily_confirmed_world:,d}"),
                 ],
-                className="card-body"
-                )
-            ],
-            className='card my-2 text-center shadow'
+            className='cards deaths'
             ),
         ],
-        className="col-md-3"
-        ),
-        html.Div([
+        lg = 3, xs = 12
+        ),    
+
+        dbc.Col([
             #Card 3
-            html.Div([
+            dbc.Card([
                 # Card 3 body
-                html.Div([
-                    html.H4(
-                        children='Total hospitalized: ',
-                        className='card-title'
-                    ),
-                    html.H4(f"{int(BE_total_merged['Total hospitalized'].max()):,d}",
-                        className='card-text'
-                    ),
-                ],
-                className="card-body"
-                )
+                html.H4(children='Total hospitalized: '),
+                html.H2(f"{int(BE_total_merged['Total hospitalized'].max()):,d}"),
+                #html.P('New daily confirmed cases: ' + f"{daily_confirmed_EU28:,d}"),
             ],
-            className='card my-2 text-center shadow'
+            className='cards cases'
             ),
         ],
-        className="col-md-3"
+        lg = 3, xs = 12
         ),        
-        html.Div([
+        dbc.Col([
             #Card 4
-            html.Div([
+            dbc.Card([
                 # Card 4 body
-                html.Div([
-                    html.H4(
-                        children='Released from hospital: ',
-                        className='card-title'
-                    ),
-                    html.H4(f"{int(BE_total_merged['Released from hospital'].max()):,d}",
-                        className='card-text'
-                    ),
-                ],
-                className="card-body"
-                )
-            ],
-            className='card my-2 text-center shadow'
+                html.H4(children='Released from hospital: '),
+                html.H2(f"{int(BE_total_merged['Released from hospital'].max()):,d}"),
+                #html.P('New daily confirmed deaths: ' + f"{daily_deaths_EU28:,d}"),
+             ],
+            className='cards deaths'
             ),
         ],
-        className="col-md-3"
-        ),
+        lg = 3, xs = 12
+        ),  
     ],
-    className="row"
+    className = "midRow d-flex"
     ),
     
     #Second Row 363
+    dbc.Row([
+        #Col2 Left
+        dbc.Col([
+            dbc.Card([
+                dbc.Tabs([
+                    dbc.Tab(tab_left_brussels, label="Brussels"),
+                    dbc.Tab(tab_left_flanders, label="Flanders"),
+                    dbc.Tab(tab_left_wallonia, label="Wallonia"),
+                ],
+                className="nav-justified"
+                ),
+            ],
+            className="card my-2 ",
+            id="regionStats",
+            ),
+        ],
+        #align = "stretch",
+        lg = 3, md = 12 
+        ),
+
+    #Col6 Middle
+        dbc.Col([
+            #Map, Table
+            html.Div([
+                html.Div([
+                    dcc.Graph(id='belgium_map', figure = gen_map(df_epistat_muni_clean, df_muni_geo), config=config)
+                ],
+                #className=' h-100',
+                id="belgiumMap",
+                ),
+            ],
+            className='my-2 '
+            ),
+        ],
+        #className="col-md-6 order-md-2"
+        lg = 6, xs = 12
+        ),
+
+        #Col2 Right
+        dbc.Col([
+            dbc.Card([
+                dbc.Tabs([
+                    dbc.Tab(tab_right, label="Province statistics(*)"),
+                ],
+                className="nav-justified",
+                id = 'info_tab_right'
+                )
+            ],
+            className="items my-2 ",
+            id="provinceStats",
+            ),
+            dbc.Tooltip(children = [
+                html.P([
+                    "This tab shows a set of statistics for the provinces in Belgium. We report the latest available data. The data on cumulative statistics are usually updated with a delay of 1-2 days"
+                ],),
+            ],
+            target="info_tab_right",
+            style= {'opacity': '0.9'}
+            ),
+        ],
+        #className= "h-100",
+        lg = 3, xs = 12
+        ),
+    ],
+    className = "botRow d-flex"
+    )
+    ],
+    className="container-fluid cf py-2"
+    ),
+
+
+
+
+
+'''
     html.Div([
         
         #Col6 Middle
@@ -817,17 +326,7 @@ app.layout = html.Div([
             ],
             className='my-2 mx-auto'
             ),
-            #Map, Table
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='belgium_map', figure = map_selection(df_epistat_muni_clean))
-                ],
-                className='',
-                id="belgiumMap",
-                ),
-            ],
-            className='my-2 shadow'
-            ),
+
             #Buttons based on screen size
             html.Div([
                 html.Div([
@@ -1080,51 +579,11 @@ app.layout = html.Div([
         ],
         className="col-md-6 order-md-2"
         ),
-        
-        #Col2 Left
-        html.Div([
-            html.Div([
-                dbc.Tabs([
-                    dbc.Tab(tab_left_brussels, label="Brussels"),
-                    dbc.Tab(tab_left_flanders, label="Flanders"),
-                    dbc.Tab(tab_left_wallonia, label="Wallonia"),
-                ],
-                className="nav-justified"
-                )
-            ],
-            className="card my-2 shadow",
-            id="regionStats",
-            )
-        ],
-        className="col-md-3 order-md-1"
-        ),
 
-        #Col2 Right
-        html.Div([
-            html.Div([
-                dbc.Tabs([
-                    dbc.Tab(tab_right, label="Province statistics(*)"),
-                ],
-                className="nav-justified",
-                id = 'info_tab_right'
-                )
-            ],
-            className="card my-2 shadow",
-            id="provinceStats",
-            ),
-            dbc.Tooltip(children = [
-                html.P([
-                    "This tab shows a set of statistics for the provinces in Belgium. We report the latest available data. The data on cumulative statistics are usually updated with a delay of 1-2 days"
-                ],),],
-                target="info_tab_right",
-                style= {'opacity': '0.9'}
-            ),
-        ],
-        className="col-md-3 order-md-3",
-        ),
     ],
     className="row"
     ),
+    '''
 ],
 className="container-fluid"
 )
@@ -1145,7 +604,7 @@ def line_selection(linear_log, reg_gender, var_choice):
 @app.callback(
     Output('line-graph-lifetable', 'figure'),
     [Input('lifetable-option', 'value'),])
-def line_selection(line_lifetable):
+def line_selection2(line_lifetable):
     fig1 = life_expectancy(life_table_discrete, BE_deaths_lifetable, line_lifetable)
     return fig1
 
@@ -1153,7 +612,7 @@ def line_selection(line_lifetable):
     Output('line-graph-province', 'figure'),
     [Input('demo-dropdown', 'value'),
     Input('plots-mode', 'value')])
-def line_selection(dropdown, line_bar):
+def line_selection3(dropdown, line_bar):
     if len(dropdown) == 0:
         dropdown = 'Belgium'
     fig1 = draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province = dropdown, plot_mode = line_bar)
