@@ -397,9 +397,9 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
 
 def gen_map(map_data,geo):
     mapbox_access_token = 'pk.eyJ1IjoiZmVkZWdhbGwiLCJhIjoiY2s5azJwaW80MDQxeTNkcWh4bGhjeTN2NyJ9.twKWO-W5wPLX6m9OfrpZCw'
-    zoom = 6
-    lat = 50.85045
-    lon=4.34878
+    zoom = 7
+    lat = 50.57379
+    lon = 4.69365
     return {
         "data": [{
             "type": "choroplethmapbox",  #specify the type of data to generate, in this case, scatter map box is used
@@ -417,10 +417,12 @@ def gen_map(map_data,geo):
         ],
         "layout":{
             'paper_bgcolor': '#2c3e50',
-            'height': 800,
+            'height': 660,
             'margin': {
                 'l':0,
                 'r':0,
+                't':0,
+                'b':0,
             },
             'hovermode':"closest",
             'mapbox': {
@@ -489,7 +491,7 @@ def tab_right_provinces(BE_total_prov_merged):
                             dbc.ListGroupItemText(f"Confirmed cases: {int(temp_data.loc[temp_data['PROVINCE'] == prov]['Cumulative cases'].max()):,}", color = 'info'),
                             dbc.ListGroupItemText(f"Hospitalized: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Hospitalized']):,}", color = 'warning'),
                             dbc.ListGroupItemText(f"ICU: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['ICU']):,}", color = 'danger'),
-                            dbc.ListGroupItemText(f"Respiratory: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Respiratory']):,}", color = 'darning'),
+                            dbc.ListGroupItemText(f"Respiratory: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Respiratory']):,}", color = 'warning'),
                             dbc.ListGroupItemText(f"Released from hospital: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Released from hospital']):,}", color = 'info'),
                             dbc.ListGroupItemText(f"Total hospitalized: {int(temp_data.loc[temp_data['PROVINCE'] == prov].iloc[-1]['Total hospitalized']):,}", color = 'warning'),],
                                         className="items") for prov in sorted(list(set(BE_total_prov_merged['PROVINCE'])))

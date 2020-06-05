@@ -207,10 +207,10 @@ app.layout = html.Div([
             dbc.Card([
                 # Card 3 body
                 html.H4(children='Total hospitalized: '),
-                html.H2(f"{int(BE_total_merged['Total hospitalized'].max()):,d}"),
+                html.H2(f"{int(BE_total_merged['Total hospitalized'].max()):,d}", className ="text-warning"),
                 #html.P('New daily confirmed cases: ' + f"{daily_confirmed_EU28:,d}"),
             ],
-            className='cards cases'
+            className='cards'
             ),
         ],
         lg = 3, xs = 12
@@ -220,10 +220,10 @@ app.layout = html.Div([
             dbc.Card([
                 # Card 4 body
                 html.H4(children='Released from hospital: '),
-                html.H2(f"{int(BE_total_merged['Released from hospital'].max()):,d}"),
+                html.H2(f"{int(BE_total_merged['Released from hospital'].max()):,d}", className ="text-info"),
                 #html.P('New daily confirmed deaths: ' + f"{daily_deaths_EU28:,d}"),
              ],
-            className='cards deaths'
+            className='cards'
             ),
         ],
         lg = 3, xs = 12
