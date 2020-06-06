@@ -395,7 +395,7 @@ app.layout = html.Div([
                 ),
                 dbc.Tooltip(children = [
                     html.P([
-                        "This group of plots includes data on confirmed cases and deaths, as well as plots on mortality rate and share of infected population."
+                        "This group of plots includes data on confirmed cases and deaths, as well as plots on mortality rate and Infection rates."
                     ],),
                     html.P([
                         "Using the dropdown menu it is possible to choose between statistics at the aggregate level or for a specfic gender."
@@ -480,7 +480,7 @@ app.layout = html.Div([
                     ),
                     dcc.Dropdown(
                         id='mortality-infected',
-                        options=[{'label': i, 'value': i} for i in ['Mortality rate', 'Share of infected population']],
+                        options=[{'label': i, 'value': i} for i in ['Mortality rate', 'Infection rate']],
                         multi=False,
                         value = 'Mortality rate',
                     ),
@@ -489,7 +489,7 @@ app.layout = html.Div([
                             "Mortality rate: Share of deaths out of population in 2019 for each region. If a gender is selected the 2019 population is gender- and region- specific."
                         ],),
                         html.P([
-                            "Share of infected population: Share of confirmed cases out of population in 2019 for each region. If a gender is selected the 2019 population is gender- and region- specific."
+                            "Infection rate: Share of confirmed cases out of population in 2019 for each region. If a gender is selected the 2019 population is gender- and region- specific."
                         ],),],
                         target="tooltip_mr_sip",
                         style= {'opacity': '0.9'}

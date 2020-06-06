@@ -159,12 +159,12 @@ def life_expectancy(life_table_discrete, BE_deaths, line_plot):
                             )
         plots.append(trace)
     layout = dict(title = {'text' : f'Life expectancy and COVID-19 deaths', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 450,
-                        plot_bgcolor = '#2c3e50',
-                        paper_bgcolor = '#5AC7C1',
+                        plot_bgcolor = 'white',
+                        paper_bgcolor = 'white',
                         showlegend=True,
                         legend = dict(x = 0, y=-0.3, orientation = 'h'),
-                        xaxis = dict(title_text = 'Age', showgrid=True, gridwidth=1, gridcolor='#5AC7C1'),
-                        yaxis = dict(title_text = 'Probability of death', showgrid=True, gridwidth=1, gridcolor='#5AC7C1'))
+                        xaxis = dict(title_text = 'Age', showgrid=True, gridwidth=1, gridcolor='lightgrey'),
+                        yaxis = dict(title_text = 'Probability of death', showgrid=True, gridwidth=1, gridcolor='lightgrey'))
     fig = go.Figure( data = plots, layout = layout)
     return fig
 
@@ -185,7 +185,7 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
                             name=var,
                             line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
                             hovertext = [f"Province: {selected_province} <br>{var}: {y.iloc[indice][var]:,} <br>Date: {x[indice]}" for indice in range(len(y))]))
-        fig.update_layout(title= 'Data by province')
+        fig.update_layout(title= 'Belgium cumulative numbers')
         fig.update_xaxes(tickformat = '%d %B (%a)<br>%Y')
         fig.update_yaxes(tickformat = ',')
         fig.update_layout(
@@ -204,11 +204,11 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
             margin=dict(l=0, r=0, t=65, b=0),
             height=350,
             yaxis = {'type': 'linear'},
-            plot_bgcolor = '#2c3e50',
-            paper_bgcolor = '#5AC7C1',
+            plot_bgcolor = 'white',
+            paper_bgcolor = 'white',
         )
-        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
-        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
         fig.update_yaxes(zeroline=True, zerolinewidth=1, zerolinecolor='black')
         fig.update_xaxes(zeroline=True, zerolinewidth=1, zerolinecolor='black')
     elif plot_mode == 'Bar':
@@ -225,12 +225,12 @@ def draw_province_plots(BE_total_prov_merged, BE_total_merged, selected_province
                             "Province: %{x}<br>" +
                             "<extra></extra>",))
         fig.update_layout(title = {'text' : 'Cases and hospitalization, by province', 'y':0.95, 'x':0.45, 'xanchor': 'center','yanchor': 'top', 'font' : {'size': 25}}, height = 350,
-                            plot_bgcolor = '#2c3e50',
-                            paper_bgcolor = '#5AC7C1',
+                            plot_bgcolor = 'white',
+                            paper_bgcolor = 'white',
                             showlegend=True,
                             legend = dict(x = 0, y=-0.4, orientation = 'h'),
-                            xaxis = dict(showgrid=True, gridwidth=1, gridcolor='#5AC7C1'),
-                            yaxis = dict( showgrid=True, gridwidth=1, gridcolor='#5AC7C1', tickformat = ','))
+                            xaxis = dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),
+                            yaxis = dict( showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ','))
     return fig
 
 def draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths, BE_reg_female_deaths, BE_reg_male_cases, BE_reg_female_cases, variable, linear_log, gender):
@@ -312,11 +312,11 @@ def draw_regional_plot(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deat
         margin=dict(l=0, r=0, t=65, b=0),
         #height=350,
         yaxis = {'type': 'linear' if linear_log == 'Linear' else 'log'},
-        plot_bgcolor = '#2c3e50',
-        paper_bgcolor = '#5AC7C1',
+        plot_bgcolor = 'white',
+        paper_bgcolor = 'white',
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
@@ -350,7 +350,7 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
                                 hovertext = [f"Region: {reg} <br>Mortality rate: {y.iloc[indice]['DEATHS']*100:.2f}% <br>Days: {x[indice]} <br>Date: {y.iloc[indice]['DATE']}" for indice in range(len(y))]))
             fig.update_yaxes(tickformat = '.2%')
         fig.update_layout(title= 'Mortality rate')
-    elif var_choice == 'Share of infected population':
+    elif var_choice == 'Infection rate':
         if gender == 'Male':
             temp_df = BE_reg_male_cases.copy()
         elif gender == 'Female':
@@ -374,9 +374,9 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
                                 mode='lines+markers',
                                 name=reg,
                                 line=dict(width=3), marker = dict(size = 3, line = dict(width = 1,color = 'DarkSlateGrey')), hoverinfo = "text", connectgaps = True,
-                                hovertext = [f"Region: {reg} <br>Share of infected population: {y.iloc[indice]['CASES']*100:.2f}% <br>Days: {x[indice]} <br>Date: {y.iloc[indice]['DATE']}" for indice in range(len(y))]))
+                                hovertext = [f"Region: {reg} <br>Infection rate: {y.iloc[indice]['CASES']*100:.2f}% <br>Days: {x[indice]} <br>Date: {y.iloc[indice]['DATE']}" for indice in range(len(y))]))
             fig.update_yaxes(tickformat = '.2%')
-        fig.update_layout(title= 'Share of infected population')
+        fig.update_layout(title= 'Infection rate')
 
     fig.update_layout(
         hovermode='closest',
@@ -393,11 +393,11 @@ def draw_regional_share(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_dea
         ),
         margin=dict(l=0, r=0, t=65, b=0),
         #height=350,
-        plot_bgcolor = '#2c3e50',
-        paper_bgcolor = '#5AC7C1',
+        plot_bgcolor = 'white',
+        paper_bgcolor = 'white',
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
@@ -424,7 +424,7 @@ def gen_map(map_data,geo):
         },
         ],
         "layout":{
-            'paper_bgcolor': '#2c3e50',
+            'paper_bgcolor': 'white',
             'height': 660,
             'margin': {
                 'l':0,
@@ -478,11 +478,11 @@ def excess_mortality_lines(BE_excess_mortality):
             orientation="h"
         ),
         margin=dict(l=0, r=0, t=65, b=0),
-        plot_bgcolor = '#2c3e50',
-        paper_bgcolor = '#5AC7C1',
+        plot_bgcolor = 'white',
+        paper_bgcolor = 'white',
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1', range = [0, y_covid.index.max() + 1])
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#5AC7C1', tickformat = ',')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey', range = [0, y_covid.index.max() + 1])
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey', tickformat = ',')
     fig.update_yaxes(zeroline=True, zerolinewidth=2, zerolinecolor='black')
 
     return fig
@@ -537,9 +537,9 @@ def tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_male_deaths
                             dbc.ListGroupItemText(f"Mortality rate: {(BE_reg_total_deaths.loc[region, 'DEATHS'].max()/BE_reg_pop.iloc[index]['Total'])*100:.2f}%", color = 'warning'),
                             dbc.ListGroupItemText(f"Mortality rate (female): {(BE_reg_female_deaths.loc[region, 'DEATHS'].max()/BE_reg_pop.iloc[index]['Female'])*100:.2f}%", color = 'warning'),
                             dbc.ListGroupItemText(f"Mortality rate (male): {(BE_reg_male_deaths.loc[region, 'DEATHS'].max()/BE_reg_pop.iloc[index]['Male'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Share of infected population: {(BE_reg_total_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Total'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Share of infected population (female): {(BE_reg_female_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Female'])*100:.2f}%", color = 'warning'),
-                            dbc.ListGroupItemText(f"Share of infected population (male): {(BE_reg_male_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Male'])*100:.2f}%", color = 'warning'),
+                            dbc.ListGroupItemText(f"Infection rate: {(BE_reg_total_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Total'])*100:.2f}%", color = 'warning'),
+                            dbc.ListGroupItemText(f"Infection rate (female): {(BE_reg_female_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Female'])*100:.2f}%", color = 'warning'),
+                            dbc.ListGroupItemText(f"Infection rate (male): {(BE_reg_male_cases.loc[region, 'CASES'].max()/BE_reg_pop.iloc[index]['Male'])*100:.2f}%", color = 'warning'),
                             dbc.ListGroupItemText(f"Population in 2019: {int(BE_reg_pop.iloc[index]['Total']):,}", color = 'success'),
                             dbc.ListGroupItemText(f"Population in 2019 (female): {int(BE_reg_pop.iloc[index]['Female']):,}", color = 'success'),
                             dbc.ListGroupItemText(f"Population in 2019 (male): {int(BE_reg_pop.iloc[index]['Male']):,}", color = 'success'),
