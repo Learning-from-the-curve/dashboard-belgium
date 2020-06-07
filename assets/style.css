@@ -1,9 +1,9 @@
 .btn {
     /*height: 100vh;  For 100% screen height */
     /*width:  100vw;  For 100% screen width */
-    font-family: Helvetica, sans-serif;
+    font-family: 'Lato', sans-serif;
     background-color: #5AC7C1; 
-    color: #2c3e50;
+    color: #f3e8da;
     /*color: #4DDDDD;*/
     /*padding: 15px 32px;*/
     text-align: center;
@@ -13,30 +13,30 @@
    border: 2px solid #5AC7C1;
 }
 .btn:hover {
-    background-color: #2c3e50; 
+    background-color: #f3e8da; 
     color: #5AC7C1;
     border: 2px solid #5AC7C1;
 }
 .btn:active {
-    background-color: #2c3e50; 
+    background-color: #f3e8da; 
     color: #5AC7C1;
     border: 2px solid #5AC7C1;
 }
 .btn:focus {
-    background-color: #2c3e50; 
+    background-color: #f3e8da; 
     color: #5AC7C1;
     border: 2px solid #5AC7C1;
 }
 body {
-    font-family: Helvetica, sans-serif;
+    font-family: 'Lato', sans-serif;
     font-weight: bold;
-    color: #f3e8da;
+    color: #2c3e50;
     height: 100%;
 
-    background-color: #2c3e50;
+    background-color: #f3e8da;
 }
 .cards{
-    background-color: #2c3e50; 
+    background-color: #f3e8da; 
     text-align: center;
     display: flex;
 /*    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
@@ -45,13 +45,13 @@ body {
 
 }
 .modal-content{
-    background-color: #2c3e50; 
+    background-color: #f3e8da; 
 }
 hr {
-    border: 1px solid #f3e8da;
+    border: 1px solid #2c3e50;
 }
 .items{
-    background-color: #2c3e50; 
+    background-color: #f3e8da; 
     font-size: 16px;
     /*border-color: coral;*/
     border-bottom: 1px solid #5AC7C1;
@@ -79,34 +79,34 @@ h2.deaths{
     background: #5AC7C1;
 }
 ::-webkit-scrollbar-thumb {
-    background: #2c3e50;
+    background: #f3e8da;
 }
 .card{
-    background-color: #2c3e50; 
+    background-color: #f3e8da; 
     border: 2px solid #5AC7C1;;
 }
 
 .nav{
     font-size: 20px;
-    background-color: #2c3e50;
+    background-color: #f3e8da;
 }
 
 .nav-link{
-    background-color: #2c3e50;
+    background-color: #f3e8da;
 }
 .nav-tabs .nav-link.active{
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 .nav-tabs .nav-link.active:hover{
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 .selected-countries-tab{
-    background-color: #2c3e50;
+    background-color: #f3e8da;
 }
 .spanCountryName{
-    color: #f3e8da; 
+    color: #2c3e50; 
 }
 .spanDeaths{
     color: #E62E4A; 
@@ -117,31 +117,31 @@ h2.deaths{
 
 .Select-menu-outer{
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 /*
 .Select-clear-zone{
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 .Select-clear{
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 .Select-arrow-zone{
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 .Select-arrow{
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 */
 .Select-control {
     background-color: #5AC7C1;
     border-radius: 4px;
-    border: 1px solid #f3e8da;
-    color: #2c3e50;
+    border: 1px solid #2c3e50;
+    color: #f3e8da;
     display: table;
     border-spacing: 0;
     border-collapse: separate;
@@ -151,13 +151,13 @@ h2.deaths{
 
 .Select--multi .Select-value {
     background-color: #5AC7C1;
-    color: #2c3e50;
+    color: #f3e8da;
 }
 
 h1, h3, h4, h5, h6 {
     font-family: Helvetica, sans-serif;
     font-weight: bold;
-    color: #f3e8da;
+    color: #2c3e50;
     text-align: center;
     margin: 0px;
 }
@@ -174,7 +174,7 @@ h1, h3, h4, h5, h6 {
 
 }
 .tabcard{
-    height: 60vh;
+    height: 30vh;
 }
 /*
 .topRow{
@@ -188,7 +188,7 @@ h1, h3, h4, h5, h6 {
     height: 700px;
 }
 */
-/*#2C3E50
+/*#f3e8da
   #00FF8D
   #4DDDDD
   #E62E4A
