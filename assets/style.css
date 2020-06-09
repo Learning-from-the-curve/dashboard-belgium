@@ -2,30 +2,30 @@
     /*height: 100vh;  For 100% screen height */
     /*width:  100vw;  For 100% screen width */
     font-family: 'Lato', sans-serif;
-    background-color: #5AC7C1; 
-    color: #f3e8da;
+    background-color: #2c3e50; 
+    color: white;
     /*color: #4DDDDD;*/
     /*padding: 15px 32px;*/
     text-align: center;
     /*text-decoration: none;*/
     display: inline-block;
    /* font-size: 16px;*/
-   border: 2px solid #5AC7C1;
+   border: 2px solid #2c3e50;
 }
 .btn:hover {
-    background-color: #f3e8da; 
-    color: #5AC7C1;
-    border: 2px solid #5AC7C1;
+    background-color: white; 
+    color: #2c3e50;
+    border: 2px solid #2c3e50;
 }
 .btn:active {
-    background-color: #f3e8da; 
-    color: #5AC7C1;
-    border: 2px solid #5AC7C1;
+    background-color: white; 
+    color: #2c3e50;
+    border: 2px solid #2c3e50;
 }
 .btn:focus {
-    background-color: #f3e8da; 
-    color: #5AC7C1;
-    border: 2px solid #5AC7C1;
+    background-color: white; 
+    color: #2c3e50;
+    border: 2px solid #2c3e50;
 }
 body {
     font-family: 'Lato', sans-serif;
@@ -33,10 +33,10 @@ body {
     color: #2c3e50;
     height: 100%;
 
-    background-color: #f3e8da;
+    background-color: white;
 }
 .cards{
-    background-color: #f3e8da; 
+    background-color: white; 
     text-align: center;
     display: flex;
 /*    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
@@ -45,16 +45,16 @@ body {
 
 }
 .modal-content{
-    background-color: #f3e8da; 
+    background-color: white; 
 }
 hr {
     border: 1px solid #2c3e50;
 }
 .items{
-    background-color: #f3e8da; 
+    background-color: white; 
     font-size: 16px;
     /*border-color: coral;*/
-    border-bottom: 1px solid #5AC7C1;
+    border-bottom: 1px solid #2c3e50;
 }
 .cases{
     color: #1EA674; 
@@ -73,37 +73,37 @@ h2.deaths{
 ::-webkit-scrollbar {
     height: 8px; 
     width: 8px; 
-    background: #5AC7C1; 
+    background: #2c3e50; 
 }
 ::-webkit-scrollbar-corner {
-    background: #5AC7C1;
+    background: #2c3e50;
 }
 ::-webkit-scrollbar-thumb {
-    background: #f3e8da;
+    background: white;
 }
 .card{
-    background-color: #f3e8da; 
-    border: 2px solid #5AC7C1;;
+    background-color: white; 
+    border: 2px solid #2c3e50;;
 }
 
 .nav{
     font-size: 20px;
-    background-color: #f3e8da;
+    background-color: white;
 }
 
 .nav-link{
-    background-color: #f3e8da;
+    background-color: white;
 }
 .nav-tabs .nav-link.active{
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 .nav-tabs .nav-link.active:hover{
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 .selected-countries-tab{
-    background-color: #f3e8da;
+    background-color: white;
 }
 .spanCountryName{
     color: #2c3e50; 
@@ -116,32 +116,32 @@ h2.deaths{
 }
 
 .Select-menu-outer{
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 /*
 .Select-clear-zone{
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 .Select-clear{
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 .Select-arrow-zone{
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 .Select-arrow{
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 */
 .Select-control {
-    background-color: #5AC7C1;
+    background-color: white;
     border-radius: 4px;
     border: 1px solid #2c3e50;
-    color: #f3e8da;
+    color: white;
     display: table;
     border-spacing: 0;
     border-collapse: separate;
@@ -150,8 +150,8 @@ h2.deaths{
 }
 
 .Select--multi .Select-value {
-    background-color: #5AC7C1;
-    color: #f3e8da;
+    background-color: #2c3e50;
+    color: white;
 }
 
 h1, h3, h4, h5, h6 {
@@ -174,7 +174,7 @@ h1, h3, h4, h5, h6 {
 
 }
 .tabcard{
-    height: 60vh;
+    height: 66vh;
 }
 /*
 .topRow{
@@ -188,10 +188,10 @@ h1, h3, h4, h5, h6 {
     height: 700px;
 }
 */
-/*#f3e8da
+/*white
   #00FF8D
   #4DDDDD
   #E62E4A
   #1EA674
-  #5AC7C1
+  #2c3e50
   */
