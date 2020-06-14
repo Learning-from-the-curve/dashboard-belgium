@@ -88,26 +88,55 @@ tab_wallonia = tab_left_regions(BE_reg_total_deaths, BE_reg_total_cases, BE_reg_
 tab_left_wallonia = dbc.Card(children = tab_wallonia)
 
 
-markdown_data_info = dcc.Markdown('''
-The dashboard is updated daily following new daily releases of data from the data sources listed below.
+# markdown_data_info = dcc.Markdown('''
+# The dashboard is updated daily following new daily releases of data from the data sources listed below.
 
-**Data source daily updated:**
-* Detailed COVID-19 data for Belgium from [Epistat](https://epistat.wiv-isp.be/covid/).
+# **Data source daily updated:**
+# * Detailed COVID-19 data for Belgium from [Epistat](https://epistat.wiv-isp.be/covid/).
 
-The data from Epistat usually have a delay on the reported cases, by 1-2 days. We always report the latest available value for cumulative cases, for example, in the tabs displaying province and regional statistics.
+# The data from Epistat usually have a delay on the reported cases, by 1-2 days. We always report the latest available value for cumulative cases, for example, in the tabs displaying province and regional statistics.
 
-**Other data:**
-* Geojson data used for the map at the municipality level can be found [here](https://github.com/Datafable/rolling-blackout-belgium/blob/master/data/geospatial/municipalities-belgium.geojson).
-* Life tables and population for Belgium from [Statbel](https://statbel.fgov.be).
-''')
+# **Other data:**
+# * Geojson data used for the map at the municipality level can be found [here](https://github.com/Datafable/rolling-blackout-belgium/blob/master/data/geospatial/municipalities-belgium.geojson).
+# * Life tables and population for Belgium from [Statbel](https://statbel.fgov.be).
+# ''')
 
-markdown_relevant_info = dcc.Markdown('''
-We focus on this dashboard on the COVID-19 pandemic in Belgium. This dashboard is part of a larger set of dashboards available [on our website](https://www.learningfromthecurve.net/dashboards/).
 
-Articles by members of the Learning from the Curve team reporting daily information on COVID-19 are available [here](https://www.learningfromthecurve.net/commentaries/).
+markdown_relevant_info = html.Div([
+    html.P([
+        "We focus on this dashboard on the COVID-19 pandemic in Belgium. This dashboard is part of a larger set of dashboards available ",
+        dcc.Link('on our website', href='https://www.learningfromthecurve.net/dashboards/', target="_top"),
+    ]),
+    html.P([
+        "Articles by members of the Learning from the Curve team reporting daily information on COVID-19 are available ",
+        dcc.Link('here', href='https://www.learningfromthecurve.net/commentaries/', target="_top"),
+    ]),
+    html.P([
+        "Please, report any bug at the following contact address: ",
+        dcc.Link('learningfromthecurve.info@gmail.com', href='mailto:learningfromthecurve.info@gmail.com'),
+    ]),
+])
 
-Please, report any bug at the following contact address: learningfromthecurve.info@gmail.com.
-''')
+markdown_data_info = html.Div([
+    html.P([
+        "The dashboard is updated daily following new daily releases of data from the data sources listed below.",
+    ]),
+    html.P([
+        "Data source daily updated:",
+        html.Ul([
+            html.Li(dcc.Link('Detailed COVID-19 data for Belgium from Epistat', href='https://epistat.wiv-isp.be/covid/', target="_blank"),),
+        ]),
+        "The data from Epistat usually have a delay on the reported cases, by 1-2 days. We always report the latest available value for cumulative cases, for example, in the tabs displaying province and regional statistics.",
+    ]),
+    html.P([
+        "Other data:",
+        html.Ul([
+            html.Li(dcc.Link('Geojson', href='https://github.com/Datafable/rolling-blackout-belgium/blob/master/data/geospatial/municipalities-belgium.geojson', target="_blank"),),
+            html.Li(dcc.Link('Life tables and population for Belgium from Statbel', href='https://statbel.fgov.be', target="_blank"),),
+        ])
+    ]),
+])
+
 
 #FIXME temp variables
 try:
