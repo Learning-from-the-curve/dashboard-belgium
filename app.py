@@ -146,7 +146,6 @@ except:
 # Bootstrap Grid Layout
 ############################
 app.layout = html.Div([
-    html.Div([
     #Header TITLE
     html.Div([
         #Info Modal Button LEFT
@@ -326,12 +325,7 @@ app.layout = html.Div([
         ),
     ],
     className = "botRow d-flex"
-    )
-    ],
-    className="container-fluid cf py-2"
     ),
-
-    html.Div([
     #Buttons based on screen size
     html.Div([
         html.Div([
@@ -610,12 +604,8 @@ app.layout = html.Div([
     ], 
     justify="center"
     ),
-    ],
-    className="container-fluid cf py-2"
-    ),
-
 ],
-className="container-fluid"
+className="container-fluid cf py-2"
 )
 
 @app.callback(
